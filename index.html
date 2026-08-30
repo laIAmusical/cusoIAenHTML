@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tutor IA - Creación de Contenido IA en HTML</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            claude: {
+              bg: '#191919',
+              sidebar: '#212121',
+              card: '#262626',
+              border: '#383838',
+              text: '#ececec',
+              muted: '#9b9b9b',
+              accent: '#d97706'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    body {
+      background-color: #191919;
+      color: #ececec;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #191919;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #383838;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #4f4f4f;
+    }
+    @keyframes blinkArrow {
+      0%, 100% { opacity: 1; transform: translateX(0); }
+      50% { opacity: 0.25; transform: translateX(3px); }
+    }
+    .follow-arrow {
+      display: inline-block;
+      color: #d97706;
+      animation: blinkArrow 0.8s ease-in-out infinite;
+      margin-right: 4px;
+    }
+    /* Botón "Siguiente" de la teoría: parpadea hasta que el alumno avanza de página */
+    @keyframes blinkSiguienteBtn {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.55); border-color: rgba(217,119,6,0.9); color: #fcd34d; }
+      50% { box-shadow: 0 0 0 6px rgba(217,119,6,0); border-color: rgba(217,119,6,0.35); color: #ececec; }
+    }
+    .blink-siguiente {
+      animation: blinkSiguienteBtn 1.1s ease-in-out infinite;
+    }
+    /* Términos interactivos del glosario dentro de la teoría */
+    .glosario-term {
+      color: #fbbf24;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-decoration-color: rgba(251,191,36,0.6);
+      text-underline-offset: 3px;
+      cursor: pointer;
+      font-weight: 600;
+      background: rgba(217,119,6,0.10);
+      padding: 0 4px;
+      border-radius: 4px;
+      border: none;
+      font: inherit;
+      line-height: inherit;
+      transition: background-color .15s ease, color .15s ease;
+    }
+    .glosario-term:hover, .glosario-term:focus-visible {
+      background: rgba(217,119,6,0.24);
+      color: #fcd34d;
+      outline: none;
+    }
+    .glosario-term i {
+      font-size: 0.65em;
+      margin-left: 2px;
+      opacity: 0.8;
+    }
+    /* ===== Ajustes de legibilidad y anti-recorte para móvil ===== */
+    html, body { overflow-x: hidden; }
+    pre, code { overflow-wrap: anywhere; }
+    #sidebarOverlay { transition: opacity .2s ease; }
+    @media (max-width: 767px) {
+      .text-xs { font-size: 0.8125rem; line-height: 1.2rem; }
+      .text-\[10px\] { font-size: 0.75rem; }
+      .text-\[11px\] { font-size: 0.8125rem; }
+      .text-sm { font-size: 0.9rem; line-height: 1.4rem; }
+      h1, h2, h3 { overflow-wrap: anywhere; }
+      #chatContainer, #teoriaContenido, #correccionModalBody, #profesorModalBody, #glosarioModalBody, #presentacionModalBody {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      /* Red de seguridad: evita que contenedores flex anidados (que por defecto
+         tienen min-width:auto) empujen la página entera más ancha que la pantalla. */
+      body, main, header, #chatContainer, #chatContainer * { min-width: 0; }
+    }
+  </style>
+</head>
+<body class="bg-claude-bg text-claude-text h-screen flex overflow-hidden">
+
+  <div id="presentacionModalOverlay" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm items-center justify-center p-4">
+    <div class="max-w-lg w-full bg-claude-card border border-claude-border rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center gap-3 p-5 border-b border-claude-border">
+        <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-claude-accent text-lg font-bold shrink-0">
+          <i class="fa-solid fa-code"></i>
+        </div>
+        <div>
+          <h2 class="font-bold text-base text-amber-400">Tutor IA: Contenido IA en HTML</h2>
+          <p class="text-xs text-claude-muted">Presentación del curso interactivo de integración de IA</p>
+        </div>
+      </div>
+      <div id="presentacionModalBody" class="p-5 text-sm text-claude-text leading-relaxed whitespace-pre-wrap max-h-[55vh] overflow-y-auto custom-scrollbar">
+        <div class="flex items-center gap-2 text-claude-muted text-xs">
+          <i class="fa-solid fa-circle-notch fa-spin text-claude-accent"></i>
+          <span>Preparando el temario del curso...</span>
+        </div>
+      </div>
+      <div class="p-4 border-t border-claude-border flex justify-end">
+        <button id="comenzarCursoBtn" disabled onclick="cerrarModalYComenzar()"
+          class="bg-claude-accent hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm py-2 px-5 rounded-lg transition-colors flex items-center gap-2">
+          <span>Comenzar Curso</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="svgLightboxOverlay" onclick="cerrarSvgLightbox()" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="max-w-2xl w-full bg-claude-card border border-claude-border rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-claude-border">
+        <span class="text-xs font-semibold text-claude-muted uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-image text-claude-accent"></i> Visual Architecture Card
+        </span>
+        <button onclick="cerrarSvgLightbox()" class="text-claude-muted hover:text-claude-text w-7 h-7 flex items-center justify-center rounded-lg hover:bg-claude-sidebar transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="svgLightboxBody" class="p-5 flex justify-center items-center bg-[#121212]"></div>
+    </div>
+  </div>
+
+  <div id="glosarioModalOverlay" onclick="cerrarGlosario()" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="max-w-lg w-full bg-claude-card border border-claude-border rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center gap-3 p-5 border-b border-claude-border">
+        <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-claude-accent text-lg font-bold shrink-0">
+          <i id="glosarioModalIcono" class="fa-solid fa-circle-question"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h2 id="glosarioModalTitulo" class="font-bold text-base text-amber-400 truncate">Término</h2>
+          <p id="glosarioModalSubtitulo" class="text-xs text-claude-muted">Definición rápida</p>
+        </div>
+        <button onclick="cerrarGlosario()" class="text-claude-muted hover:text-claude-text w-7 h-7 flex items-center justify-center rounded-lg hover:bg-claude-sidebar transition-colors shrink-0">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="glosarioModalBody" class="p-5 text-sm text-claude-text leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar space-y-3"></div>
+      <div class="p-3 border-t border-claude-border text-center">
+        <span class="text-[11px] text-claude-muted"><i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i>Estos términos resaltados aparecen en todos los módulos del curso.</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="correccionModalOverlay" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-claude-card border border-claude-border rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center gap-3 p-5 border-b border-claude-border">
+        <div class="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 text-lg font-bold shrink-0">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h2 class="font-bold text-base text-purple-300">Corrección del profesor IA</h2>
+          <p id="correccionModalSubtitulo" class="text-xs text-claude-muted truncate">Preguntas de repaso</p>
+        </div>
+        <button onclick="cerrarCorreccionModal()" class="text-claude-muted hover:text-claude-text w-7 h-7 flex items-center justify-center rounded-lg hover:bg-claude-sidebar transition-colors shrink-0">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="correccionModalBody" class="p-5 text-sm text-claude-text leading-relaxed max-h-[55vh] overflow-y-auto custom-scrollbar space-y-3"></div>
+      <div id="correccionModalFooter" class="hidden p-4 border-t border-claude-border bg-[#1c1c1c]"></div>
+    </div>
+  </div>
+
+  <div id="profesorModalOverlay" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-claude-card border border-claude-border rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center gap-3 p-5 border-b border-claude-border">
+        <div class="w-10 h-10 rounded-full bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-300 text-lg font-bold shrink-0">
+          <i class="fa-solid fa-chalkboard-user"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h2 class="font-bold text-base text-sky-300">Respuesta del profesor IA</h2>
+          <p id="profesorModalSubtitulo" class="text-xs text-claude-muted truncate">Sobre tu mensaje</p>
+        </div>
+        <button onclick="cerrarProfesorModal()" class="text-claude-muted hover:text-claude-text w-7 h-7 flex items-center justify-center rounded-lg hover:bg-claude-sidebar transition-colors shrink-0">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="profesorModalBody" class="p-5 text-sm text-claude-text leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar space-y-3"></div>
+    </div>
+  </div>
+
+  <div id="sidebarOverlay" onclick="toggleSidebarMovil()" class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
+
+  <aside id="sidebarPrincipal" class="w-72 max-w-[85vw] bg-claude-sidebar border-r border-claude-border flex flex-col justify-between fixed inset-y-0 left-0 z-40 -translate-x-full transition-transform duration-200 ease-out md:static md:z-auto md:w-80 md:translate-x-0 md:flex">
+    <div class="p-4 border-b border-claude-border space-y-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center space-x-2">
+          <div class="bg-claude-accent text-white p-2 rounded-lg font-bold text-sm">
+            <i class="fa-solid fa-laptop-code"></i>
+          </div>
+          <h1 class="font-bold text-lg tracking-wide">Curso IA en HTML</h1>
+        </div>
+        <button onclick="toggleSidebarMovil()" title="Cerrar menú" class="md:hidden text-claude-muted hover:text-claude-text w-8 h-8 flex items-center justify-center rounded-lg hover:bg-claude-card transition-colors shrink-0">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="relative">
+        <button id="btnMenuHamburguesa" onclick="toggleMenuNavegacion()" title="Abrir menú"
+          class="w-full flex items-center justify-between bg-claude-card border border-claude-border hover:border-amber-500/50 text-claude-text text-xs font-semibold px-3 py-2 rounded-lg transition-colors">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-bars text-claude-accent"></i> Menú</span>
+          <i id="iconoMenuNavegacion" class="fa-solid fa-chevron-down text-[10px] text-claude-muted transition-transform"></i>
+        </button>
+        <nav id="menuNavegacion" class="hidden mt-2 flex flex-col gap-1.5">
+          <a href="informacion.html" class="flex items-center gap-2 bg-claude-card border border-claude-border hover:border-amber-500/50 hover:text-claude-text text-claude-muted text-xs font-medium px-3 py-2 rounded-lg transition-colors">
+            <i class="fa-solid fa-circle-info w-4 text-center"></i> Información del curso
+          </a>
+          <a href="descargas.html" class="flex items-center gap-2 bg-claude-card border border-claude-border hover:border-amber-500/50 hover:text-claude-text text-claude-muted text-xs font-medium px-3 py-2 rounded-lg transition-colors">
+            <i class="fa-solid fa-download w-4 text-center"></i> Descargas
+          </a>
+          <a href="progreso.html" class="flex items-center gap-2 bg-claude-card border border-claude-border hover:border-amber-500/50 hover:text-claude-text text-claude-muted text-xs font-medium px-3 py-2 rounded-lg transition-colors">
+            <i class="fa-solid fa-chart-line w-4 text-center"></i> Progreso del alumno
+          </a>
+          <a href="otroscursos.html" class="flex items-center gap-2 bg-claude-card border border-claude-border hover:border-amber-500/50 hover:text-claude-text text-claude-muted text-xs font-medium px-3 py-2 rounded-lg transition-colors">
+            <i class="fa-solid fa-layer-group w-4 text-center"></i> Otros cursos
+          </a>
+        </nav>
+      </div>
+      
+      <div class="space-y-3">
+        <button onclick="probarGeminiKey()" class="w-full bg-claude-accent hover:bg-amber-600 text-white font-medium text-xs py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-plug"></i>
+          <span>Probar Conexión</span>
+        </button>
+        <div id="geminiTestResult" class="hidden text-xs p-2 rounded-lg text-center mt-2"></div>
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-claude-border text-xs text-claude-muted text-center">
+      <span>Tutor Práctico de IA & Web &bull; Frontend & Prompts</span>
+    </div>
+  </aside>
+
+  <main class="flex-1 min-w-0 flex flex-col h-full relative">
+    <header class="min-h-14 border-b border-claude-border bg-claude-sidebar flex flex-wrap items-center justify-between gap-2 px-3 py-2 md:h-14 md:px-6 md:py-0">
+      <div class="flex items-center gap-2 min-w-0">
+        <button onclick="toggleSidebarMovil()" title="Abrir menú" class="md:hidden shrink-0 text-claude-muted hover:text-claude-text w-8 h-8 flex items-center justify-center rounded-lg bg-claude-card border border-claude-border">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <span class="font-semibold text-sm md:text-base flex items-center gap-2 min-w-0 truncate">
+          <i class="fa-solid fa-wand-magic-sparkles text-claude-accent shrink-0"></i>
+          <span class="truncate">Creación de contenido</span>
+        </span>
+        <span class="hidden sm:inline-flex bg-amber-500/10 text-amber-400 text-xs px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">10 Módulos Progresivos · Teoría & Práctica</span>
+      </div>
+      <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+        <button id="btnAutoNarracion" onclick="toggleAutoNarracion()" title="Activar/Desactivar Narración Automática" class="text-claude-muted hover:text-claude-text text-xs bg-claude-card border border-claude-border px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center">
+          <i id="iconoAutoNarracion" class="fa-solid fa-toggle-off sm:mr-1.5"></i> <span id="textoAutoNarracion" class="hidden sm:inline">Auto-Audio: OFF</span>
+        </button>
+        <button onclick="detenerAudio()" title="Detener audio" class="text-claude-muted hover:text-claude-text text-xs bg-claude-card border border-claude-border px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors">
+          <i class="fa-solid fa-volume-xmark sm:mr-1"></i><span class="hidden sm:inline"> Silenciar</span>
+        </button>
+        <button onclick="limpiarChat()" class="text-claude-muted hover:text-claude-text text-xs bg-claude-card border border-claude-border px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors">
+          <i class="fa-solid fa-trash sm:mr-1"></i><span class="hidden sm:inline"> Limpiar</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="chatContainer" class="flex-1 min-w-0 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-4">
+      <div class="max-w-3xl mx-auto bg-claude-card border border-claude-border rounded-xl p-4 text-xs text-claude-muted text-center">
+        <i class="fa-solid fa-circle-notch fa-spin text-claude-accent mr-1.5"></i> Cargando tu Tutor de IA y Desarrollo Web...
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-claude-border bg-claude-bg">
+      <div class="max-w-3xl mx-auto">
+        <div id="adjuntosPreview" class="hidden flex-wrap gap-2 mb-2"></div>
+
+        <div class="relative">
+          <textarea id="userInput" rows="3" placeholder="Escribe tu código, dudas o respuestas a los ejercicios de IA en HTML..."
+            class="w-full bg-claude-card border border-claude-border rounded-xl p-3 pl-12 pr-24 text-sm text-claude-text focus:outline-none focus:border-claude-accent resize-none custom-scrollbar"></textarea>
+
+          <input type="file" id="fileInput" multiple class="hidden"
+            accept="image/*,.txt,.md,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.h,.cs,.rb,.go,.php,.html,.htm,.css,.json,.xml,.yml,.yaml,.sql,.sh,.kt,.swift,.rs,.csv,.tsv,.log,.ini,.env,.docx">
+
+          <button type="button" onclick="document.getElementById('fileInput').click()"
+            title="Adjuntar archivo de código, texto o captura de pantalla"
+            class="absolute left-3 bottom-3 text-claude-muted hover:text-claude-text w-7 h-7 rounded-lg flex items-center justify-center transition-colors">
+            <i class="fa-solid fa-paperclip text-sm"></i>
+          </button>
+
+          <button type="button" id="micBtn" onclick="toggleSpeechRecognition()"
+            title="Dictar respuesta por micrófono"
+            class="absolute right-12 bottom-3 bg-claude-card border border-claude-border text-claude-muted hover:text-claude-accent w-8 h-8 rounded-lg flex items-center justify-center transition-colors">
+            <i class="fa-solid fa-microphone text-xs" id="micIcon"></i>
+          </button>
+
+          <button onclick="enviarMensaje()" title="Enviar mensaje" class="absolute right-3 bottom-3 bg-claude-accent hover:bg-amber-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition-colors">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </div>
+        <p class="text-[11px] text-claude-muted mt-1.5 px-1 flex items-center justify-between">
+          <span>Puedes pegar bloques de código o archivos HTML/JS para ser revisados por la IA.</span>
+          <span id="speechStatus" class="hidden text-amber-400 font-semibold animate-pulse">Escuchando...</span>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ==========================================
+    // GLOSARIO INTERACTIVO
+    // Cada término marcado en la teoría abre un modal
+    // explicativo con definición ampliada y, cuando aplica,
+    // un pequeño ejemplo de código.
+    // ==========================================
+    const GLOSARIO = {
+      api: {
+        icono: 'fa-plug-circle-bolt',
+        titulo: 'API (Application Programming Interface)',
+        resumen: 'El "contrato" que permite a dos programas hablar entre sí.',
+        contenido: [
+          'Una <strong>API</strong> es un conjunto de reglas que define cómo un programa puede pedirle información o acciones a otro. Piensa en ella como el mostrador de un restaurante: tú (el cliente) pides algo del menú (los endpoints disponibles) y la cocina (el servidor) te devuelve el plato (la respuesta), sin que necesites saber cómo se cocina.',
+          'En el desarrollo web, cuando decimos "consumir una API" normalmente nos referimos a que JavaScript, desde el navegador, envía una petición HTTP a una URL concreta (un <em>endpoint</em>) y recibe una respuesta, casi siempre en formato JSON.',
+          'Cada API define qué operaciones permite (consultar datos, crear, actualizar, borrar), qué datos necesita recibir y qué estructura tendrá la respuesta. Esa documentación es indispensable antes de integrarla.'
+        ],
+        ejemplo: `// Ejemplo conceptual de "contrato" de una API\nGET /usuarios/42        -> devuelve los datos del usuario 42\nPOST /usuarios          -> crea un usuario nuevo`
+      },
+      fetchApi: {
+        icono: 'fa-satellite-dish',
+        titulo: 'Fetch API',
+        resumen: 'La herramienta nativa del navegador para hacer peticiones HTTP.',
+        contenido: [
+          'La <strong>Fetch API</strong> es la función moderna e integrada en todos los navegadores para realizar peticiones de red desde JavaScript, sin necesidad de librerías externas.',
+          'Al llamar a <code>fetch(url)</code> el navegador devuelve una <em>Promise</em>: un objeto que representa un valor que llegará en el futuro (cuando el servidor responda). Por eso casi siempre se combina con <code>async/await</code> o con <code>.then()</code>.',
+          'Un flujo típico es: hacer la petición, comprobar que <code>response.ok</code> sea verdadero, convertir la respuesta con <code>response.json()</code> y finalmente usar esos datos en la interfaz.'
+        ],
+        ejemplo: `async function obtenerDatos() {\n  const respuesta = await fetch('https://api.ejemplo.com/datos');\n  if (!respuesta.ok) throw new Error('Error de red');\n  const datos = await respuesta.json();\n  return datos;\n}`
+      },
+      peticionPost: {
+        icono: 'fa-paper-plane',
+        titulo: 'Petición POST',
+        resumen: 'El método HTTP para enviar (crear) datos en un servidor.',
+        contenido: [
+          'HTTP define varios "verbos" o métodos. <strong>GET</strong> se usa para pedir datos sin modificarlos; <strong>POST</strong> se usa para enviar información nueva al servidor, por ejemplo crear un registro o pedirle a una IA que procese un texto.',
+          'Una petición POST bien construida necesita tres piezas: el <em>método</em> (<code>POST</code>), las <em>cabeceras</em> (headers) —como <code>Content-Type: application/json</code> para indicar el formato del cuerpo, o una cabecera de autorización si la API la requiere— y el <em>cuerpo</em> (body), que normalmente se genera con <code>JSON.stringify()</code>.',
+          'A diferencia de GET, el cuerpo de un POST puede transportar objetos completos, archivos o formularios, y su tamaño no está limitado por la URL.'
+        ],
+        ejemplo: `const respuesta = await fetch('https://api.ejemplo.com/mensajes', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ texto: 'Hola API' })\n});`
+      },
+      javascript: {
+        icono: 'fa-brands fa-js',
+        titulo: 'JavaScript',
+        resumen: 'El lenguaje que da vida e interactividad a una página web.',
+        contenido: [
+          '<strong>JavaScript</strong> es el lenguaje de programación que se ejecuta en el navegador (y también en servidores, con Node.js). Mientras que HTML define la estructura y CSS el aspecto visual, JavaScript aporta el comportamiento: reaccionar a clics, validar formularios, pedir datos a una API o actualizar la pantalla sin recargarla.',
+          'Es un lenguaje de tipado dinámico y basado en eventos: gran parte de su código no se ejecuta de forma lineal, sino como respuesta a algo que ocurre (un clic, la llegada de una respuesta de red, el paso del tiempo).',
+          'En este curso usaremos JavaScript "puro" (sin frameworks) para entender bien los fundamentos: selección de elementos del DOM, peticiones con Fetch, manejo de promesas y actualización dinámica de la interfaz.'
+        ]
+      },
+      asyncAwait: {
+        icono: 'fa-hourglass-half',
+        titulo: 'async / await',
+        resumen: 'Sintaxis para escribir código asíncrono como si fuera secuencial.',
+        contenido: [
+          'Muchas operaciones (pedir datos a un servidor, leer un archivo, esperar un temporizador) no terminan al instante. JavaScript las gestiona con <em>Promises</em>, objetos que representan "un valor que llegará luego".',
+          'La palabra clave <code>async</code> convierte una función en asíncrona: siempre devuelve una Promise. Dentro de ella, <code>await</code> "pausa" la ejecución de esa función (sin bloquear el resto de la página) hasta que la Promise se resuelve, y entrega directamente el valor final.',
+          'Esto hace que el código asíncrono se lea de arriba a abajo, como si fuera síncrono, en lugar de anidar múltiples <code>.then()</code>. Es una buena práctica envolver el <code>await</code> en un bloque <code>try/catch</code> para capturar errores de red.'
+        ],
+        ejemplo: `async function cargar() {\n  try {\n    const r = await fetch('/api/datos');\n    const datos = await r.json();\n    console.log(datos);\n  } catch (error) {\n    console.error('Falló la petición', error);\n  }\n}`
+      },
+      json: {
+        icono: 'fa-brackets-curly',
+        titulo: 'JSON (JavaScript Object Notation)',
+        resumen: 'El formato de texto estándar para intercambiar datos.',
+        contenido: [
+          '<strong>JSON</strong> es una forma de representar datos (objetos, listas, texto, números, booleanos) como texto plano, fácil de leer tanto para humanos como para máquinas. Es el formato más usado para que una API envíe o reciba información.',
+          'En JavaScript, <code>JSON.stringify(objeto)</code> convierte un objeto en texto JSON para enviarlo (por ejemplo, en el body de un POST), y <code>JSON.parse(texto)</code> o <code>response.json()</code> hacen el camino inverso: convierten texto JSON en un objeto que ya puedes usar en tu código.'
+        ],
+        ejemplo: `{\n  "nombre": "Curso IA",\n  "modulos": 5,\n  "activo": true\n}`
+      },
+      dom: {
+        icono: 'fa-sitemap',
+        titulo: 'DOM (Document Object Model)',
+        resumen: 'La representación de tu HTML como objetos manipulables.',
+        contenido: [
+          'Cuando el navegador carga una página HTML, la convierte internamente en un árbol de objetos llamado <strong>DOM</strong>. Cada etiqueta HTML se convierte en un "nodo" que JavaScript puede leer, crear, modificar o eliminar en tiempo real.',
+          'Gracias al DOM, una página deja de ser un documento estático: JavaScript puede reaccionar a eventos del usuario y transformar los datos que llegan de una API en elementos visibles, sin necesidad de recargar la página.',
+          'Manipular el DOM de forma eficiente (limpiar antes de volver a pintar, usar los métodos adecuados) es clave para que la interfaz se sienta rápida y predecible.'
+        ]
+      },
+      queryselector: {
+        icono: 'fa-crosshairs',
+        titulo: 'querySelector()',
+        resumen: 'El método para "encontrar" elementos HTML desde JavaScript.',
+        contenido: [
+          '<code>document.querySelector(selector)</code> busca en el DOM el primer elemento que coincida con un selector CSS (por ejemplo, <code>"#resultado"</code> o <code>".tarjeta"</code>) y lo devuelve para que puedas leerlo o modificarlo.',
+          'Su prima <code>document.querySelectorAll(selector)</code> devuelve todos los elementos que coincidan, en forma de lista recorrible. <code>getElementById(id)</code> es una alternativa más específica cuando solo necesitas buscar por id.'
+        ],
+        ejemplo: `const boton = document.querySelector('#btnGenerar');\nconst tarjetas = document.querySelectorAll('.tarjeta');`
+      },
+      createelement: {
+        icono: 'fa-cube',
+        titulo: 'createElement()',
+        resumen: 'Cómo se fabrica un elemento HTML nuevo desde JavaScript.',
+        contenido: [
+          '<code>document.createElement("tag")</code> crea un nuevo elemento HTML en memoria (por ejemplo un <code>li</code>, un <code>div</code> o un <code>article</code>), que todavía no es visible porque aún no forma parte de la página.',
+          'Una vez creado, se le puede asignar texto con <code>textContent</code>, clases con <code>className</code> o atributos con <code>setAttribute()</code>, y finalmente se inserta en la página con <code>appendChild()</code> u otros métodos similares.'
+        ],
+        ejemplo: `const item = document.createElement('li');\nitem.textContent = 'Nuevo elemento';`
+      },
+      textcontent: {
+        icono: 'fa-font',
+        titulo: 'textContent',
+        resumen: 'La forma segura de escribir texto dentro de un elemento.',
+        contenido: [
+          '<code>elemento.textContent = "..."</code> asigna texto plano a un elemento. Es la opción recomendada frente a <code>innerHTML</code> cuando el contenido proviene de una fuente externa (como una API), porque no interpreta el texto como código HTML.',
+          'Usar <code>innerHTML</code> con datos que no controlas puede abrir la puerta a ataques de tipo XSS (inyección de código). <code>textContent</code> evita ese riesgo mostrando siempre texto literal.'
+        ]
+      },
+      appendchild: {
+        icono: 'fa-layer-group',
+        titulo: 'appendChild()',
+        resumen: 'Cómo se inserta un elemento nuevo dentro de otro.',
+        contenido: [
+          '<code>contenedor.appendChild(elemento)</code> añade un nodo (normalmente creado con <code>createElement</code>) como último hijo de otro elemento ya existente en el DOM, haciéndolo visible en la página.',
+          'Es habitual usarlo dentro de un bucle: por cada dato recibido de una API se crea un elemento y se añade al contenedor, construyendo así listas o tarjetas dinámicas.'
+        ],
+        ejemplo: `const lista = document.querySelector('#listaResultados');\nconst item = document.createElement('li');\nitem.textContent = 'API';\nlista.appendChild(item);`
+      },
+      addeventlistener: {
+        icono: 'fa-hand-pointer',
+        titulo: 'addEventListener()',
+        resumen: 'Cómo hacer que un elemento "reaccione" a una acción del usuario.',
+        contenido: [
+          '<code>elemento.addEventListener("evento", funcion)</code> registra una función que se ejecutará cada vez que ocurra ese evento sobre el elemento: un clic, el envío de un formulario, una tecla pulsada, etc.',
+          'Es la base de la interactividad: en lugar de que la página haga siempre lo mismo, el código espera a que el usuario actúe y responde en consecuencia, por ejemplo lanzando una petición Fetch o actualizando el DOM.'
+        ],
+        ejemplo: `boton.addEventListener('click', async () => {\n  // reaccionar al clic\n});`
+      },
+      promptToUi: {
+        icono: 'fa-wand-magic-sparkles',
+        titulo: 'Prompt-to-UI',
+        resumen: 'Convertir una instrucción a una IA en componentes de interfaz.',
+        contenido: [
+          '<strong>Prompt-to-UI</strong> describe el patrón de pedirle a un modelo de IA una respuesta estructurada (normalmente JSON) para después transformarla en elementos visuales reales, en lugar de mostrar texto libre sin formato.',
+          'Un buen prompt para este fin especifica claramente los campos que se esperan en la respuesta (título, descripción, etiqueta...) para que el resultado sea predecible y fácil de validar antes de construir la interfaz.',
+          'La responsabilidad se reparte: la IA aporta contenido, pero la aplicación (tu JavaScript) sigue controlando el diseño, la seguridad y qué se pinta finalmente en el DOM.'
+        ]
+      },
+      jsonld: {
+        icono: 'fa-diagram-project',
+        titulo: 'JSON-LD',
+        resumen: 'Datos estructurados que describen tu contenido a las máquinas.',
+        contenido: [
+          '<strong>JSON-LD</strong> (JSON for Linked Data) es un formato para incluir "datos estructurados" dentro de una página HTML, normalmente en una etiqueta <code>&lt;script type="application/ld+json"&gt;</code>.',
+          'A diferencia del contenido visible, JSON-LD no se muestra al usuario: es una descripción explícita, en un vocabulario estándar (como Schema.org), de qué es la página, qué entidades contiene y cómo se relacionan.',
+          'Buscadores y sistemas de IA lo usan para entender el contenido con más precisión, por ejemplo identificando que una página es un "Curso" con un nombre, una descripción y un proveedor concreto.'
+        ]
+      },
+      geo: {
+        icono: 'fa-magnifying-glass-chart',
+        titulo: 'GEO (Generative Engine Optimization)',
+        resumen: 'Optimizar el contenido para que la IA lo entienda y lo cite bien.',
+        contenido: [
+          '<strong>GEO</strong> es la evolución del clásico SEO pensada para motores generativos y asistentes de IA: en lugar de optimizar solo para "aparecer en una lista de resultados", se optimiza para que un modelo de lenguaje pueda leer, entender y citar tu contenido correctamente.',
+          'Se apoya en buenas prácticas ya conocidas —HTML semántico, jerarquía clara de títulos, texto preciso y verificable— combinadas con datos estructurados (como JSON-LD) que dejan explícito el significado del contenido.',
+          'No es un truco de posicionamiento: los datos que declaras deben coincidir siempre con lo que el usuario ve en pantalla.'
+        ]
+      },
+      schemaorg: {
+        icono: 'fa-book',
+        titulo: 'Schema.org',
+        resumen: 'El vocabulario compartido para describir entidades en la web.',
+        contenido: [
+          '<strong>Schema.org</strong> es un vocabulario público y compartido (mantenido por Google, Microsoft, Yahoo y Yandex) que define tipos de entidades como <code>Course</code>, <code>Person</code>, <code>Organization</code> o <code>Product</code>, junto con sus propiedades esperadas.',
+          'Usarlo dentro de JSON-LD permite describir tu contenido con un lenguaje que buscadores y sistemas de IA ya "conocen" de antemano, en lugar de inventar tu propia estructura de datos.'
+        ]
+      },
+      storycards: {
+        icono: 'fa-id-card',
+        titulo: 'Storycards',
+        resumen: 'Tarjetas de contenido con jerarquía visual y una acción clara.',
+        contenido: [
+          'Una <strong>Storycard</strong> es un patrón de interfaz: una tarjeta autocontenida que comunica una idea (un título, una explicación breve, quizá un nivel o etiqueta) y ofrece una acción concreta, como "Completar" o "Ver más".',
+          'Para construirlas de forma escalable se guardan los datos en un array de objetos y se reutiliza una única función de renderizado que recorre ese array y genera las tarjetas, en lugar de escribir HTML repetido a mano.',
+          'Los eventos (como un clic en "Completar") permiten actualizar el estado de los datos y volver a renderizar, cerrando el ciclo entre datos, interfaz y acción del usuario.'
+        ]
+      },
+      endpoint: {
+        icono: 'fa-location-dot',
+        titulo: 'Endpoint',
+        resumen: 'La dirección concreta a la que se envía una petición.',
+        contenido: [
+          'Un <strong>endpoint</strong> es la URL específica de una API que atiende un tipo de petición concreto, por ejemplo <code>/v1/chat/completions</code> o <code>/usuarios/42</code>. Una misma API suele exponer varios endpoints, cada uno con un propósito distinto.',
+          'Al integrar un servicio de IA, la documentación del proveedor indica qué endpoint usar, qué método HTTP acepta (GET, POST...), qué cabeceras espera y qué forma tendrá la respuesta.'
+        ]
+      },
+      proveedorIA: {
+        icono: 'fa-microchip',
+        titulo: 'Proveedores de IA (OpenAI, Gemini...)',
+        resumen: 'Servicios externos que exponen modelos de lenguaje mediante una API.',
+        contenido: [
+          'Empresas como <strong>OpenAI</strong> o <strong>Google (Gemini)</strong> ofrecen sus modelos de IA como un servicio al que te conectas mediante una API: envías un prompt en una petición HTTP y recibes texto, código o datos estructurados generados por el modelo.',
+          'Cada proveedor tiene su propio formato de petición y de respuesta, sus propios límites de uso y su propio sistema de autenticación (normalmente una API Key), aunque el patrón general —enviar un prompt, esperar la respuesta, procesarla— es muy similar entre todos.'
+        ]
+      },
+      widget: {
+        icono: 'fa-puzzle-piece',
+        titulo: 'Widget',
+        resumen: 'Un componente de interfaz autocontenido con una función concreta.',
+        contenido: [
+          'Un <strong>widget</strong> es una pieza de interfaz independiente y reutilizable —un chat flotante, un buscador, un selector de fecha— que encapsula su propio HTML, estilos y comportamiento, y que puede incrustarse en cualquier página sin depender del resto del layout.',
+          'Un buen widget gestiona su propio estado (abierto/cerrado, cargando, con datos) y expone una superficie mínima de interacción, evitando interferir con estilos o scripts del sitio donde se inserta.'
+        ]
+      },
+      microdatos: {
+        icono: 'fa-tags',
+        titulo: 'Microdatos',
+        resumen: 'Otra forma de añadir datos estructurados, dentro de las propias etiquetas HTML.',
+        contenido: [
+          'Los <strong>microdatos</strong> son una alternativa a JSON-LD para declarar datos estructurados: en lugar de un bloque script aparte, se añaden atributos como <code>itemscope</code>, <code>itemtype</code> e <code>itemprop</code> directamente sobre las etiquetas HTML visibles.',
+          'Su ventaja es que el dato estructurado queda ligado exactamente al elemento que lo muestra, aunque en la práctica JSON-LD suele ser más fácil de mantener porque vive en un único bloque separado del marcado visual.'
+        ]
+      }
+    };
+
+    function t(clave, etiqueta) {
+      return `<button type="button" class="glosario-term" onclick="abrirGlosario('${clave}')">${etiqueta}<i class="fa-solid fa-circle-info"></i></button>`;
+    }
+
+    function abrirGlosario(clave) {
+      const dato = GLOSARIO[clave];
+      if (!dato) return;
+      const overlay = document.getElementById('glosarioModalOverlay');
+      const icono = document.getElementById('glosarioModalIcono');
+      const titulo = document.getElementById('glosarioModalTitulo');
+      const subtitulo = document.getElementById('glosarioModalSubtitulo');
+      const body = document.getElementById('glosarioModalBody');
+      icono.className = `fa-solid ${dato.icono}`;
+      titulo.textContent = dato.titulo;
+      subtitulo.textContent = dato.resumen;
+      const parrafos = dato.contenido.map(p => `<p>${p}</p>`).join('');
+      const ejemplo = dato.ejemplo
+        ? `<pre class="overflow-x-auto bg-[#121212] border border-claude-border rounded-xl p-3 text-xs leading-6 text-emerald-200"><code>${escaparHtml(dato.ejemplo)}</code></pre>`
+        : '';
+      body.innerHTML = parrafos + ejemplo;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function cerrarGlosario() {
+      const overlay = document.getElementById('glosarioModalOverlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    // ==========================================
+    // CURSO FIJO: APIs & JAVASCRIPT
+    // La teoría y el ejercicio base son locales y estables.
+    // Gemini solo interviene al crear una pregunta de práctica diferente.
+    // Los términos clave son interactivos: al pulsarlos se abre
+    // un modal (ver GLOSARIO) con la explicación ampliada.
+    // ==========================================
+    // Audio por página, organizado en carpetas por módulo:
+    //   audio/moduloN/pagina1.wav, audio/moduloN/pagina2.wav, audio/moduloN/pagina3.wav...
+    // La clave "<idModulo>_p<nºPágina>" apunta a cada archivo. La clave general
+    // "<idModulo>" se usa solo como respaldo si faltara el audio de una página concreta.
+    const RUTAS_AUDIO = {
+      bienvenida: 'audio/00-bienvenida-curso.wav',
+
+      modulo1: 'audio/modulo1/pagina1.wav',
+      modulo1_p1: 'audio/modulo1/pagina1.wav',
+      modulo1_p2: 'audio/modulo1/pagina2.wav',
+      modulo1_p3: 'audio/modulo1/pagina3.wav',
+
+      modulo2: 'audio/modulo2/pagina1.wav',
+      modulo2_p1: 'audio/modulo2/pagina1.wav',
+      modulo2_p2: 'audio/modulo2/pagina2.wav',
+      modulo2_p3: 'audio/modulo2/pagina3.wav',
+
+      modulo3: 'audio/modulo3/pagina1.wav',
+      modulo3_p1: 'audio/modulo3/pagina1.wav',
+      modulo3_p2: 'audio/modulo3/pagina2.wav',
+      modulo3_p3: 'audio/modulo3/pagina3.wav',
+
+      modulo4: 'audio/modulo4/pagina1.wav',
+      modulo4_p1: 'audio/modulo4/pagina1.wav',
+      modulo4_p2: 'audio/modulo4/pagina2.wav',
+      modulo4_p3: 'audio/modulo4/pagina3.wav',
+
+      modulo5: 'audio/modulo5/pagina1.wav',
+      modulo5_p1: 'audio/modulo5/pagina1.wav',
+      modulo5_p2: 'audio/modulo5/pagina2.wav',
+      modulo5_p3: 'audio/modulo5/pagina3.wav',
+
+      modulo6: 'audio/modulo6/pagina1.wav',
+      modulo6_p1: 'audio/modulo6/pagina1.wav',
+      modulo6_p2: 'audio/modulo6/pagina2.wav',
+      modulo6_p3: 'audio/modulo6/pagina3.wav',
+
+      modulo7: 'audio/modulo7/pagina1.wav',
+      modulo7_p1: 'audio/modulo7/pagina1.wav',
+      modulo7_p2: 'audio/modulo7/pagina2.wav',
+      modulo7_p3: 'audio/modulo7/pagina3.wav',
+
+      modulo8: 'audio/modulo8/pagina1.wav',
+      modulo8_p1: 'audio/modulo8/pagina1.wav',
+      modulo8_p2: 'audio/modulo8/pagina2.wav',
+      modulo8_p3: 'audio/modulo8/pagina3.wav',
+
+      modulo9: 'audio/modulo9/pagina1.wav',
+      modulo9_p1: 'audio/modulo9/pagina1.wav',
+      modulo9_p2: 'audio/modulo9/pagina2.wav',
+      modulo9_p3: 'audio/modulo9/pagina3.wav',
+
+      modulo10: 'audio/modulo10/pagina1.wav',
+      modulo10_p1: 'audio/modulo10/pagina1.wav',
+      modulo10_p2: 'audio/modulo10/pagina2.wav',
+      modulo10_p3: 'audio/modulo10/pagina3.wav'
+    };
+
+    const MODULOS = [
+      {
+        id: 'modulo1',
+        etiqueta: 'Módulo 1',
+        titulo: 'API & Fetch',
+        icono: 'fa-plug-circle-bolt',
+        audioId: 'modulo1',
+        objetivo: 'Comprender cómo una página web se comunica con un servicio externo de forma segura y asíncrona.',
+        teoriaPaginas: [
+          `<p>Una ${t('api', 'API')} (Application Programming Interface) es un contrato que permite a dos programas intercambiar información sin que uno necesite conocer los detalles internos del otro. En una aplicación web, ${t('javascript', 'JavaScript')} puede enviar una petición HTTP a un ${t('endpoint', 'endpoint')} (una URL concreta) y recibir una respuesta, normalmente en formato ${t('json', 'JSON')}.</p>
+<p>Toda esta comunicación ocurre siguiendo el modelo cliente-servidor: el navegador (cliente) pide algo, y un servidor remoto responde. Ese "algo" puede ser leer datos, enviar un formulario o pedirle a un ${t('proveedorIA', 'proveedor de IA')} como OpenAI o Gemini que genere contenido.</p>
+<p>Cada API define qué operaciones permite, qué datos necesita recibir y qué estructura tendrá la respuesta. Esa documentación —muchas veces llamada "referencia de la API"— es indispensable antes de integrarla en un proyecto real.</p>`,
+          `<p>La ${t('fetchApi', 'Fetch API')} es la herramienta moderna del navegador para crear esas peticiones, sin necesidad de librerías externas. Como una respuesta puede tardar unos milisegundos (o varios segundos), estas operaciones son <em>asíncronas</em>: el navegador no se congela esperando, sino que sigue funcionando y "avisa" cuando la respuesta llega.</p>
+<p>Para trabajar con ese tiempo de espera de forma legible se usa ${t('asyncAwait', 'async/await')}: la palabra <code>async</code> declara una función asíncrona, y <code>await</code> pausa solo esa función hasta que llegue la respuesta, sin bloquear el resto de la página. Es buena práctica envolver estas llamadas en un bloque <code>try/catch</code> para manejar errores de red.</p>
+<p>Antes de usar los datos conviene comprobar <code>response.ok</code>: si el servidor devuelve un error (por ejemplo un código 404 o 500), la petición "no falla" técnicamente en JavaScript, así que hay que revisar ese indicador a mano.</p>`,
+          `<p>Cuando necesitamos enviar datos (no solo pedirlos), usamos una ${t('peticionPost', 'petición POST')}. Debe incluir el método, las cabeceras —por ejemplo <code>Content-Type: application/json</code> y la autorización cuando exista— y un cuerpo convertido con <code>JSON.stringify()</code>.</p>
+<p>La respuesta del servidor se transforma de nuevo en un objeto usable con <code>response.json()</code>. Este ciclo completo —construir la petición, enviarla, esperar, convertir la respuesta y comprobar errores— es el patrón que repetirás en prácticamente cualquier integración con una API de IA.</p>`
+        ],
+        codigo: `<!-- index.html -->\n<button id="btnGenerar">Consultar</button>\n<div id="resultado"></div>`,
+        ejercicio: `Crea el archivo app.js. Debe escuchar el clic de btnGenerar, hacer una petición POST simulada, recibir un objeto con la propiedad texto y escribir ese texto dentro de #resultado.`,
+        criterios: ['Selecciona el botón con getElementById.', 'Usa addEventListener para el clic.', 'Declara una función async y utiliza await.', 'Inserta data.texto mediante textContent.'],
+        contextoPregunta: 'API, Fetch API, async/await, POST, JSON, addEventListener y actualización de #resultado.',
+        preguntasTeoria: [
+          '¿Qué diferencia hay entre una petición GET y una petición POST?',
+          '¿Para qué sirve la palabra clave await dentro de una función async?',
+          '¿Por qué conviene comprobar response.ok antes de usar los datos de una respuesta?',
+          '¿Qué cabecera se usa habitualmente para indicar que el cuerpo de una petición es JSON?',
+          'Describe con tus palabras qué es un endpoint.'
+        ]
+      },
+      {
+        id: 'modulo2',
+        etiqueta: 'Módulo 2',
+        titulo: 'DOM Dinámico',
+        icono: 'fa-code-branch',
+        audioId: 'modulo2',
+        objetivo: 'Transformar datos JavaScript en elementos HTML visibles y accesibles.',
+        teoriaPaginas: [
+          `<p>El ${t('dom', 'DOM')} (Document Object Model) es la representación de una página HTML como objetos que ${t('javascript', 'JavaScript')} puede consultar, crear y modificar en tiempo real. Cuando el navegador termina de cargar el HTML, construye internamente ese árbol de nodos: cada etiqueta se convierte en un objeto manipulable.</p>
+<p>Gracias al DOM, una página deja de ser un documento estático: JavaScript puede reaccionar a eventos del usuario y transformar los datos que llegan de una API en elementos visibles, sin necesidad de recargar la página.</p>`,
+          `<p>Para localizar un elemento existente usamos ${t('queryselector', 'querySelector()')} (o <code>getElementById</code>). Para fabricar un elemento nuevo desde cero usamos ${t('createelement', 'createElement()')}: crea el nodo en memoria, pero todavía no es visible hasta que lo insertamos en la página.</p>
+<p>Con datos de una ${t('api', 'API')} o de un ${t('json', 'JSON')} local, recorremos la información (por ejemplo con <code>forEach</code>) y por cada elemento construimos su representación visual: creamos el nodo, le asignamos texto con ${t('textcontent', 'textContent')} y lo insertamos en el contenedor con ${t('appendchild', 'appendChild()')}.</p>`,
+          `<p>Es preferible usar <code>textContent</code> en lugar de <code>innerHTML</code> cuando el contenido proviene de una fuente externa: <code>innerHTML</code> interpreta el texto como código HTML, lo que puede abrir la puerta a inyecciones de código (XSS) si esos datos no son de confianza.</p>
+<p>Una interfaz dinámica bien construida separa los datos de su presentación y contempla varios estados: mostrar "cargando", mostrar los resultados, o mostrar un mensaje de error claro. Antes de volver a pintar, conviene limpiar el contenedor para no duplicar elementos.</p>`
+        ],
+        codigo: `<!-- index.html -->\n<ul id="listaResultados"></ul>\n\n// Datos recibidos\nconst datos = [{ nombre: 'API' }, { nombre: 'DOM' }];`,
+        ejercicio: `Completa una función renderizarResultados(datos) que limpie #listaResultados y cree un elemento li por cada objeto. Cada li debe mostrar la propiedad nombre con textContent.`,
+        criterios: ['Selecciona el contenedor de resultados.', 'Limpia el contenido anterior.', 'Recorre el array con forEach o for...of.', 'Crea y agrega cada li con textContent.'],
+        contextoPregunta: 'DOM, querySelector, createElement, textContent, appendChild, arrays y renderizado de datos JSON.',
+        preguntasTeoria: [
+          '¿Qué es el DOM y en qué momento lo construye el navegador?',
+          '¿Qué diferencia hay entre createElement() y querySelector()?',
+          '¿Por qué es más seguro usar textContent que innerHTML con datos externos?',
+          '¿Qué problema evita limpiar el contenedor antes de volver a renderizar?',
+          'Nombra al menos dos estados que debería contemplar una interfaz dinámica (además de "resultados").'
+        ]
+      },
+      {
+        id: 'modulo3',
+        etiqueta: 'Módulo 3',
+        titulo: 'Prompt-to-UI',
+        icono: 'fa-wand-magic-sparkles',
+        audioId: 'modulo3',
+        objetivo: 'Diseñar prompts y convertir respuestas estructuradas en componentes de interfaz.',
+        teoriaPaginas: [
+          `<p>${t('promptToUi', 'Prompt-to-UI')} consiste en describir una necesidad de interfaz de manera precisa para que un modelo de IA genere contenido útil y estructurado, en lugar de texto libre difícil de aprovechar. Un prompt efectivo define objetivo, usuario, restricciones, tono y el formato de salida esperado.</p>
+<p>Para integrar esa respuesta en una web, conviene pedir explícitamente ${t('json', 'JSON')} con campos previsibles (por ejemplo <code>titulo</code>, <code>descripcion</code>, <code>etiqueta</code>) en lugar de un párrafo suelto. Un JSON con forma fija es mucho más fácil de validar y de transformar en interfaz que texto libre.</p>`,
+          `<p>Después de recibir el JSON, ${t('javascript', 'JavaScript')} valida los campos esperados y los muestra mediante componentes reutilizables construidos con ${t('createelement', 'createElement()')}, ${t('textcontent', 'textContent')} y ${t('appendchild', 'appendChild()')}. Por ejemplo, una tarjeta puede incluir un título, una descripción, una etiqueta y una acción.</p>
+<p>Aquí conviene tener claro el reparto de responsabilidades: la IA aporta contenido, pero la aplicación mantiene el control del diseño, la seguridad y la estructura del ${t('dom', 'DOM')}. Nunca se inyecta la respuesta de la IA directamente como HTML sin pasar antes por esa validación.</p>`,
+          `<p>Antes de renderizar, comprueba que la respuesta sea válida: que existan los campos esperados y que tengan el tipo correcto. Si falta un campo, muestra una alternativa segura (un texto por defecto, o un aviso) en lugar de romper la interfaz con un error.</p>
+<p>Este patrón —pedir estructura, validar, renderizar con control— es lo que separa un prototipo frágil de una integración de IA robusta que no se rompe ante una respuesta inesperada del modelo.</p>`
+        ],
+        codigo: `const tarjeta = {\n  titulo: 'Consejo CSS',\n  descripcion: 'Usa grid para organizar tarjetas.',\n  etiqueta: 'Diseño'\n};\n\n<div id="panel"></div>`,
+        ejercicio: `Escribe una función crearTarjeta(tarjeta) que construya un article con un h3, un párrafo y un span. Inserta el article en #panel usando únicamente createElement, textContent y appendChild.`,
+        criterios: ['Comprueba o usa los campos de la tarjeta.', 'Crea elementos semánticos.', 'Asigna texto con textContent.', 'Inserta la tarjeta en el panel.'],
+        contextoPregunta: 'prompts estructurados, JSON, validación de campos, componentes reutilizables y creación segura de UI.',
+        preguntasTeoria: [
+          '¿Qué ventaja tiene pedirle a una IA una respuesta en JSON en lugar de texto libre?',
+          'Menciona tres elementos que debería definir un buen prompt.',
+          '¿Quién debería seguir controlando el diseño y la seguridad de la interfaz: la IA o tu aplicación?',
+          '¿Qué deberías hacer si un campo esperado falta en la respuesta de la IA?',
+          '¿Por qué no conviene inyectar la respuesta de la IA directamente como HTML sin validarla?'
+        ]
+      },
+      {
+        id: 'modulo4',
+        etiqueta: 'Módulo 4',
+        titulo: 'GEO & JSON-LD',
+        icono: 'fa-magnifying-glass-chart',
+        audioId: 'modulo4',
+        objetivo: 'Añadir contexto semántico para que buscadores y sistemas de IA comprendan mejor el contenido.',
+        teoriaPaginas: [
+          `<p>${t('geo', 'GEO')} (Generative Engine Optimization) agrupa prácticas para que el contenido sea claro, verificable y fácil de interpretar tanto por motores de búsqueda tradicionales como por sistemas generativos de IA. La base sigue siendo un HTML semántico: títulos jerárquicos, secciones, artículos, listas y texto preciso, sin trucos.</p>
+<p>${t('jsonld', 'JSON-LD')} es un formato de datos estructurados que se añade normalmente en una etiqueta <code>&lt;script type="application/ld+json"&gt;</code> dentro del documento. A diferencia del contenido visible, no se muestra al usuario: describe explícitamente entidades y relaciones para que una máquina las entienda sin ambigüedad.</p>`,
+          `<p>Ese vocabulario compartido suele ser ${t('schemaorg', 'Schema.org')}: define tipos como <code>Course</code>, <code>Person</code> u <code>Organization</code>, con propiedades ya estandarizadas. Por ejemplo, un <code>Course</code> puede incluir <code>name</code>, <code>description</code> y un <code>provider</code> (el proveedor del curso, típicamente una <code>Organization</code>).</p>
+<p>Estos datos estructurados se escriben con la misma sintaxis ${t('json', 'JSON')} que ya conocemos de las respuestas de una ${t('api', 'API')}: es un objeto con claves y valores, solo que aquí describe el propio documento en lugar de datos que llegan de un servidor.</p>`,
+          `<p>Una alternativa a JSON-LD son los ${t('microdatos', 'microdatos')}: en vez de un bloque aparte, añaden atributos como <code>itemscope</code> e <code>itemprop</code> directamente sobre las etiquetas visibles. JSON-LD suele preferirse por ser más fácil de mantener en un único bloque.</p>
+<p>Un principio importante: los datos estructurados deben coincidir siempre con el contenido visible y mantenerse actualizados. No son un truco de posicionamiento, sino una declaración verificable sobre el recurso; si no coinciden, pierden su valor y pueden penalizar la confianza en el sitio.</p>`
+        ],
+        codigo: `<script type="application/ld+json">\n{\n  "@context": "https://schema.org",\n  "@type": "Course",\n  "name": "Creación de Contenido IA en HTML",\n  "description": "Curso progresivo de desarrollo web"\n}\n<\/script>`,
+        ejercicio: `Crea un bloque JSON-LD de tipo Course para el curso. Añade name, description y provider; el provider debe ser una Organization con name. Colócalo en el head del documento.`,
+        criterios: ['Usa type application/ld+json.', 'Incluye @context y @type.', 'Define datos reales del curso.', 'Modela provider como Organization.'],
+        contextoPregunta: 'HTML semántico, GEO, Schema.org, JSON-LD, Course, Organization y datos estructurados coherentes.',
+        preguntasTeoria: [
+          '¿Qué diferencia hay entre GEO y el SEO tradicional?',
+          '¿Dónde se coloca normalmente un bloque JSON-LD dentro del documento?',
+          '¿Qué vocabulario estándar se usa habitualmente dentro de JSON-LD?',
+          '¿Qué diferencia hay entre JSON-LD y los microdatos?',
+          '¿Por qué los datos estructurados deben coincidir siempre con el contenido visible?'
+        ]
+      },
+      {
+        id: 'modulo5',
+        etiqueta: 'Módulo 5',
+        titulo: 'Storycards',
+        icono: 'fa-layer-group',
+        audioId: 'modulo5',
+        objetivo: 'Combinar datos, componentes y eventos para construir una experiencia de aprendizaje interactiva.',
+        teoriaPaginas: [
+          `<p>Una ${t('storycards', 'Storycard')} es una tarjeta de contenido que comunica una idea con jerarquía visual, contexto y una acción clara. En aplicaciones de aprendizaje puede contener un título, una explicación breve, una etiqueta de nivel, un icono y controles para avanzar.</p>
+<p>Para construirlas de manera escalable, guarda sus datos en un array de objetos (por ejemplo, con ${t('json', 'JSON')} recibido de una ${t('api', 'API')} o definido localmente) y reutiliza una única función de renderizado.</p>`,
+          `<p>Esa función de renderizado, en ${t('javascript', 'JavaScript')}, recorre el array y genera cada tarjeta con ${t('createelement', 'createElement()')} y ${t('appendchild', 'appendChild()')}, en vez de repetir HTML a mano. Los eventos permiten reaccionar a las acciones del usuario: con ${t('addeventlistener', 'addEventListener()')} escuchamos, por ejemplo, el clic en un botón "Completar".</p>
+<p>Ese clic puede abrir un detalle, marcar la tarjeta como completada en los datos y disparar un nuevo renderizado para reflejar ese cambio en el ${t('dom', 'DOM')}. Este patrón —datos en un array, una función de renderizado y eventos que actualizan el estado— es la base de casi cualquier interfaz interactiva moderna, incluso antes de introducir frameworks como React o Vue.</p>`,
+          `<p>El último paso de este bloque inicial del curso es integrar todo lo aprendido: obtener datos con una ${t('fetchApi', 'Fetch API')}, transformarlos en componentes del DOM, estructurar instrucciones para IA con el patrón ${t('promptToUi', 'Prompt-to-UI')}, y describir el contenido con semántica y ${t('jsonld', 'JSON-LD')} para que también lo entiendan los sistemas de IA.</p>
+<p>A partir de aquí, los siguientes módulos construyen sobre esta base para crear widgets, generadores de contenido y experiencias personalizadas más completas.</p>`
+        ],
+        codigo: `const lecciones = [\n  { titulo: 'API', nivel: 'Básico', completada: false },\n  { titulo: 'DOM', nivel: 'Intermedio', completada: false }\n];\n\n<div id="storycards"></div>`,
+        ejercicio: `Implementa renderizarStorycards(lecciones). Cada tarjeta debe incluir título, nivel y un botón “Completar”. Al pulsarlo, actualiza completada a true y vuelve a renderizar la lista.`,
+        criterios: ['Recorre la colección de lecciones.', 'Crea tarjetas con datos del objeto.', 'Añade un evento click al botón.', 'Actualiza el estado y renderiza de nuevo.'],
+        contextoPregunta: 'Storycards, arrays de objetos, estado de interfaz, eventos click, re-renderizado y experiencia de aprendizaje.',
+        preguntasTeoria: [
+          '¿Qué elementos suele incluir una Storycard?',
+          '¿Por qué conviene guardar los datos en un array de objetos y usar una única función de renderizado?',
+          '¿Qué hace addEventListener() en el contexto de una Storycard?',
+          'Describe el ciclo: acción del usuario → cambio de estado → nuevo renderizado.',
+          '¿Qué módulos anteriores se combinan en el patrón Storycards?'
+        ]
+      },
+      {
+        id: 'modulo6',
+        etiqueta: 'Módulo 6',
+        titulo: 'Widgets & Componentes IA',
+        icono: 'fa-puzzle-piece',
+        audioId: 'modulo6',
+        objetivo: 'Construir componentes de interfaz autocontenidos, como buscadores semánticos o asistentes flotantes.',
+        teoriaPaginas: [
+          `<p>Un ${t('widget', 'widget')} es una pieza de interfaz independiente y reutilizable —un buscador, un asistente flotante, un selector— que encapsula su propio HTML, estilos y comportamiento, y puede incrustarse en cualquier página sin depender del resto del layout.</p>
+<p>A diferencia de una página completa, un widget resuelve una única tarea concreta y debe convivir sin conflictos con los estilos y scripts ya existentes en el sitio donde se inserta.</p>`,
+          `<p>Un patrón muy común para widgets flotantes es posicionarlos con <code>position: fixed</code> en una esquina de la pantalla, y controlar su visibilidad alternando una clase CSS al pulsar un botón. El estado (abierto/cerrado) se guarda en una variable de JavaScript y se refleja tanto en el ${t('dom', 'DOM')} como en atributos de accesibilidad como <code>aria-expanded</code>.</p>
+<p>Mantener ese estado explícito, en lugar de inferirlo del CSS, facilita depurar el comportamiento del widget y sincronizarlo con otras partes de la interfaz.</p>`,
+          `<p>Cuando el widget incorpora IA —un buscador semántico o un asistente conversacional— el flujo típico es: capturar la entrada del usuario, construir un prompt o una consulta, llamar a la ${t('api', 'API')} correspondiente con ${t('fetchApi', 'Fetch API')}, y mostrar el resultado de forma progresiva mientras se espera la respuesta (un indicador de carga, por ejemplo).</p>
+<p>La accesibilidad importa especialmente aquí: usar <code>aria-live</code> en la zona de resultados permite que un lector de pantalla anuncie el contenido nuevo sin que el usuario tenga que buscarlo manualmente.</p>`
+        ],
+        codigo: `<!-- Botón flotante + panel del widget -->\n<button id="btnWidget" aria-expanded="false">Asistente</button>\n<div id="panelWidget" class="hidden" aria-live="polite"></div>`,
+        ejercicio: `Implementa toggleWidget(). Debe alternar la clase "hidden" de #panelWidget y actualizar el atributo aria-expanded de #btnWidget entre "true" y "false" en cada clic.`,
+        criterios: ['Selecciona el botón y el panel del widget.', 'Usa addEventListener para el clic.', 'Alterna la visibilidad del panel.', 'Actualiza aria-expanded en cada cambio de estado.'],
+        contextoPregunta: 'Widgets, componentes flotantes, position fixed, estado abierto/cerrado, aria-expanded y aria-live.',
+        preguntasTeoria: [
+          '¿Qué caracteriza a un widget frente a una página completa?',
+          '¿Qué propiedad CSS se usa habitualmente para anclar un widget flotante a la pantalla?',
+          '¿Para qué sirve el atributo aria-expanded?',
+          '¿Qué papel juega aria-live en un widget que muestra resultados de una IA?',
+          'Describe brevemente el flujo de un buscador semántico integrado en un widget.'
+        ]
+      },
+      {
+        id: 'modulo7',
+        etiqueta: 'Módulo 7',
+        titulo: 'Generador de Artículos',
+        icono: 'fa-file-pen',
+        audioId: 'modulo7',
+        objetivo: 'Construir un formulario que envía un tema a una IA y publica un artículo con estructura semántica.',
+        teoriaPaginas: [
+          `<p>Un generador de artículos automático parte de un formulario HTML sencillo: un campo de texto para el tema y un botón de envío. En ${t('javascript', 'JavaScript')} escuchamos el evento <code>submit</code> del formulario y llamamos a <code>event.preventDefault()</code> para evitar que la página se recargue, gestionando el envío nosotros mismos.</p>
+<p>El valor introducido por el usuario se lee con <code>input.value</code> y conviene validarlo (que no esté vacío, que tenga una longitud razonable) antes de gastar una llamada a la IA con datos incompletos.</p>`,
+          `<p>Con el tema ya validado, se construye un prompt que le pide a la ${t('proveedorIA', 'IA')} un artículo con estructura predecible: por ejemplo un ${t('json', 'JSON')} con <code>titulo</code> y una lista de <code>secciones</code>, cada una con <code>subtitulo</code> y <code>parrafo</code>. Pedir estructura, como vimos en ${t('promptToUi', 'Prompt-to-UI')}, es lo que permite renderizar el resultado de forma fiable.</p>
+<p>La petición se realiza con ${t('peticionPost', 'petición POST')} mediante ${t('fetchApi', 'Fetch API')}, igual que en el primer módulo del curso, mostrando un estado de "generando..." mientras se espera la respuesta.</p>`,
+          `<p>Al recibir el JSON, se recorre el array de secciones y se construye un <code>article</code> con encabezados semánticos: un <code>h1</code> para el título general y un <code>h2</code> por cada subtítulo, seguido de su <code>p</code>. Todo el texto se inserta con ${t('textcontent', 'textContent')}, nunca con <code>innerHTML</code>, para no ejecutar código que pudiera venir en la respuesta.</p>
+<p>Publicar con una jerarquía de encabezados correcta no solo ayuda a la lectura: también favorece la indexación y la interpretación semántica del contenido, conectando con lo visto en el módulo de ${t('geo', 'GEO')}.</p>`
+        ],
+        codigo: `<form id="formArticulo">\n  <input id="temaArticulo" placeholder="Tema del artículo" required>\n  <button type="submit">Generar</button>\n</form>\n<article id="articuloGenerado"></article>`,
+        ejercicio: `Implementa el listener de submit de #formArticulo: evita el envío por defecto, simula una respuesta { titulo, secciones: [{subtitulo, parrafo}] } y renderízala en #articuloGenerado con h1, h2 y p usando createElement y textContent.`,
+        criterios: ['Escucha el evento submit y usa preventDefault.', 'Valida que el tema no esté vacío.', 'Recorre las secciones recibidas.', 'Construye h1, h2 y p con textContent.'],
+        contextoPregunta: 'Formularios, preventDefault, POST, JSON estructurado, encabezados semánticos h1/h2/p y validación de entrada.',
+        preguntasTeoria: [
+          '¿Para qué sirve event.preventDefault() en el envío de un formulario?',
+          '¿Por qué conviene validar el tema antes de llamar a la IA?',
+          '¿Qué estructura JSON facilita renderizar un artículo con secciones?',
+          '¿Qué etiquetas semánticas se usan para el título y los subtítulos del artículo?',
+          '¿Cómo se relaciona este módulo con lo aprendido en el módulo de GEO & JSON-LD?'
+        ]
+      },
+      {
+        id: 'modulo8',
+        etiqueta: 'Módulo 8',
+        titulo: 'Widget de Chatbot',
+        icono: 'fa-comments',
+        audioId: 'modulo8',
+        objetivo: 'Diseñar un componente de chat incrustado que mantiene una conversación con una IA.',
+        teoriaPaginas: [
+          `<p>Un widget de chatbot tiene tres partes visuales básicas: un contenedor general, una lista de mensajes donde se acumula la conversación, y una fila inferior con un campo de texto y un botón de enviar. Pequeñas animaciones CSS (una aparición suave del panel, un "escribiendo…" parpadeante) hacen que el componente se sienta vivo sin necesitar JavaScript adicional.</p>
+<p>Este componente es, en esencia, un ${t('widget', 'widget')} más: debe poder incrustarse en cualquier página sin chocar con sus estilos.</p>`,
+          `<p>La conversación se representa como un array de mensajes en memoria, por ejemplo <code>{ rol: 'usuario' | 'ia', texto }</code>. Cada vez que se añade un mensaje, se crea su "burbuja" correspondiente con ${t('createelement', 'createElement()')} y ${t('textcontent', 'textContent')}, se aplica una clase distinta según el <code>rol</code> para diferenciarlas visualmente, y se hace scroll automático hasta el final de la lista.</p>
+<p>Guardar la conversación como datos (y no solo como HTML ya pintado) permite, por ejemplo, reenviar el historial completo a la IA para que mantenga contexto entre mensajes.</p>`,
+          `<p>Al enviar un mensaje, se añade primero el mensaje del usuario, se muestra un indicador de "escribiendo…" y se llama a la ${t('api', 'API')} conversacional con ${t('fetchApi', 'Fetch API')} enviando el historial reciente. Cuando llega la respuesta, se sustituye el indicador por la burbuja real de la IA.</p>
+<p>Es fundamental prever el caso de error (sin conexión, clave inválida, límite de uso agotado) y mostrar un mensaje claro en la propia conversación, en lugar de dejar el widget "colgado" en el estado de carga.</p>`
+        ],
+        codigo: `<div id="chatWidget">\n  <div id="listaMensajes"></div>\n  <input id="inputChat" placeholder="Escribe un mensaje...">\n  <button id="btnEnviarChat">Enviar</button>\n</div>`,
+        ejercicio: `Implementa agregarMensaje(rol, texto): crea una burbuja (div) con una clase según el rol, inserta el texto con textContent, la añade a #listaMensajes y hace scroll automático hasta el final.`,
+        criterios: ['Crea el elemento de burbuja con createElement.', 'Aplica una clase distinta según el rol.', 'Inserta el texto con textContent.', 'Actualiza el scroll de la lista tras insertar.'],
+        contextoPregunta: 'Widgets de chat, array de mensajes, burbujas de conversación, scroll automático y manejo de errores de red.',
+        preguntasTeoria: [
+          '¿Qué tres partes visuales suele tener un widget de chatbot?',
+          '¿Por qué conviene guardar la conversación como un array de objetos en memoria?',
+          '¿Qué se debe hacer visualmente mientras se espera la respuesta de la IA?',
+          '¿Qué debería mostrarse si la petición al chatbot falla?',
+          '¿Qué utilidad tiene reenviar el historial de mensajes en cada nueva llamada a la IA?'
+        ]
+      },
+      {
+        id: 'modulo9',
+        etiqueta: 'Módulo 9',
+        titulo: 'Personalizador de Interfaz',
+        icono: 'fa-sliders',
+        audioId: 'modulo9',
+        objetivo: 'Adaptar el texto y la estructura de una interfaz según el perfil o las preferencias del usuario.',
+        teoriaPaginas: [
+          `<p>Una interfaz adaptativa ajusta lo que muestra según quién la usa: su nivel de experiencia, su idioma o sus preferencias declaradas. El primer paso es representar ese perfil como un objeto ${t('json', 'JSON')} sencillo, por ejemplo <code>{ nivel: 'principiante', tono: 'cercano' }</code>, guardado localmente o recibido de una API.</p>
+<p>A partir de ese objeto, el ${t('javascript', 'JavaScript')} de la interfaz decide qué rama de contenido mostrar, sin necesidad de duplicar toda la página por cada perfil posible.</p>`,
+          `<p>Cuando la personalización involucra a una IA, el perfil se incluye como contexto dentro del prompt: por ejemplo, "explica esto a un principiante, con un tono cercano y ejemplos sencillos" frente a "resume esto para un experto, en tono técnico y directo". Es el mismo patrón de ${t('promptToUi', 'Prompt-to-UI')} aplicado a la personalización.</p>
+<p>Cuanto más concreto sea el contexto que se incluye en el prompt, más consistente será el resultado entre distintas llamadas.</p>`,
+          `<p>La respuesta de la IA se aplica de forma controlada: mapear un campo como <code>tono</code> a una clase CSS concreta, o el contenido devuelto a ${t('textcontent', 'textContent')} de elementos ya existentes, en lugar de reconstruir toda la interfaz. Así se evita romper el layout si la IA devuelve algo inesperado.</p>
+<p>Conviene definir siempre un perfil por defecto (por ejemplo, "intermedio" y tono "neutro") para que la interfaz nunca quede sin personalizar si el perfil del usuario aún no se ha cargado.</p>`
+        ],
+        codigo: `const perfil = {\n  nivel: 'principiante',\n  tono: 'cercano'\n};\n\n<div id="contenidoAdaptado" class="nivel-intermedio"></div>`,
+        ejercicio: `Escribe personalizarInterfaz(perfil) que cambie la clase de #contenidoAdaptado a "nivel-<perfil.nivel>" y escriba con textContent un mensaje distinto según perfil.tono ("cercano" o "neutro").`,
+        criterios: ['Lee las propiedades del objeto perfil.', 'Actualiza la clase del contenedor según el nivel.', 'Cambia el texto mostrado según el tono.', 'Define un comportamiento por defecto si falta algún dato.'],
+        contextoPregunta: 'Perfiles de usuario, personalización contextual, prompts con contexto, clases CSS dinámicas y valores por defecto.',
+        preguntasTeoria: [
+          '¿Qué información suele contener un objeto de perfil de usuario?',
+          '¿Cómo se incorpora el perfil del usuario dentro de un prompt para la IA?',
+          '¿Por qué es más seguro mapear la respuesta de la IA a clases o textos concretos que reconstruir toda la interfaz?',
+          '¿Qué problema evita definir un perfil por defecto?',
+          'Pon un ejemplo de cómo cambiaría un mismo contenido para un perfil "principiante" frente a uno "experto".'
+        ]
+      },
+      {
+        id: 'modulo10',
+        etiqueta: 'Módulo 10',
+        titulo: 'Proyecto Integrador',
+        icono: 'fa-trophy',
+        audioId: 'modulo10',
+        objetivo: 'Combinar API, DOM, Prompt-to-UI, GEO y componentes interactivos en un flujo de publicación completo.',
+        teoriaPaginas: [
+          `<p>Este módulo final no introduce conceptos nuevos: conecta todo lo visto en el curso en un único flujo de "publicación asistida por IA". El recorrido típico es: capturar la entrada del usuario → construir un prompt → llamar a la ${t('api', 'API')} con ${t('fetchApi', 'Fetch API')} → recibir ${t('json', 'JSON')} estructurado → transformarlo en elementos del ${t('dom', 'DOM')} → describir el resultado con ${t('jsonld', 'JSON-LD')} para buscadores y sistemas de IA.</p>
+<p>Pensar en esta cadena completa, en lugar de en piezas sueltas, es lo que diferencia un ejercicio aislado de una funcionalidad lista para producción.</p>`,
+          `<p>Cada tramo de esa cadena puede fallar de forma distinta: la red puede caerse, la IA puede tardar o devolver un JSON incompleto, el usuario puede enviar un campo vacío. Una interfaz robusta contempla, de forma consistente en todo el flujo, al menos cuatro estados: inicial/vacío, cargando, éxito y error.</p>
+<p>Reutilizar el mismo patrón de estados en cada widget del curso (el generador de artículos, el chatbot, el personalizador) hace que la aplicación completa se sienta coherente para quien la usa.</p>`,
+          `<p>Antes de dar por terminado un componente que integra IA conviene repasar una checklist breve: ¿se usa <code>textContent</code> en lugar de <code>innerHTML</code> para contenido no confiable? ¿hay manejo de errores con <code>try/catch</code>? ¿se evita volver a pintar toda la interfaz cuando basta con actualizar una parte? ¿el HTML resultante mantiene una jerarquía semántica correcta y, cuando aplica, va acompañado de ${t('jsonld', 'JSON-LD')} coherente con lo visible?</p>
+<p>Con esa checklist en mente, ya tienes las piezas para construir tus propios proyectos: un generador de contenido, un widget conversacional o un personalizador de interfaz, todos apoyados en los mismos fundamentos de API, DOM y JavaScript.</p>`
+        ],
+        codigo: `// Flujo conceptual del proyecto integrador\n// 1. capturarEntrada()\n// 2. construirPrompt(entrada, perfil)\n// 3. await llamarApiIA(prompt)\n// 4. renderizarEnDOM(datosJSON)\n// 5. actualizarJSONLD(datosJSON)`,
+        ejercicio: `Diseña (en pseudocódigo o JS real) la función generarYPublicar(tema) que orqueste: validar tema, mostrar estado "cargando", llamar a una función simulada que devuelve { titulo, secciones }, renderizar el artículo en el DOM y actualizar el contenido de un script JSON-LD con el nuevo título y descripción.`,
+        criterios: ['Valida la entrada antes de llamar a la IA.', 'Muestra un estado de carga y uno de error.', 'Renderiza el resultado en el DOM de forma segura.', 'Actualiza los datos estructurados (JSON-LD) tras publicar.'],
+        contextoPregunta: 'Integración completa: Fetch, async/await, JSON, DOM, Prompt-to-UI, JSON-LD, estados de carga/error y componentes reutilizables.',
+        preguntasTeoria: [
+          'Describe, en orden, los pasos del flujo de "publicación asistida por IA" visto en este módulo.',
+          'Nombra los cuatro estados que debería contemplar una interfaz robusta.',
+          '¿Por qué conviene reutilizar el mismo patrón de estados en distintos widgets de una misma aplicación?',
+          'Menciona dos puntos de la checklist final antes de dar por terminado un componente con IA.',
+          '¿Qué módulos del curso se combinan directamente en este proyecto integrador?'
+        ]
+      }
+    ];
+
+    // ==========================================
+    // CONEXIÓN GEMINI PARA PREGUNTAS VARIABLES
+    // Basada en el archivo de referencia: timeout,
+    // fallback de configuración y recorrido de modelos.
+    // ==========================================
+    const MODELOS_PREFERIDOS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+    const MODEL_TIMEOUT_MS = 30000;
+    let modelosGeminiDisponibles = [];
+    let modelosGeminiClave = '';
+
+    function esModeloGenerativo(modelo) {
+      const nombre = `${modelo.name || ''} ${modelo.baseModelId || ''} ${modelo.displayName || ''}`.toLowerCase();
+      const soportaContenido = (modelo.supportedGenerationMethods || []).includes('generateContent');
+      return soportaContenido && nombre.includes('gemini') && !/(tts|embedding|image|live|audio)/.test(nombre);
+    }
+
+    async function listarModelosGemini(apiKey) {
+      if (modelosGeminiClave === apiKey && modelosGeminiDisponibles.length) return modelosGeminiDisponibles;
+      const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=${encodeURIComponent(apiKey)}`);
+      const datos = await respuesta.json();
+      if (!respuesta.ok) throw new Error(datos.error?.message || `HTTP ${respuesta.status}`);
+
+      const disponibles = (datos.models || [])
+        .filter(esModeloGenerativo)
+        .map(modelo => modelo.baseModelId || String(modelo.name || '').replace(/^models\//, ''))
+        .filter(Boolean);
+      const ordenados = [
+        ...MODELOS_PREFERIDOS.filter(modelo => disponibles.includes(modelo)),
+        ...disponibles.filter(modelo => !MODELOS_PREFERIDOS.includes(modelo))
+      ];
+      if (!ordenados.length) throw new Error('La clave no tiene modelos Gemini compatibles con generateContent.');
+      modelosGeminiClave = apiKey;
+      modelosGeminiDisponibles = ordenados.slice(0, 6);
+      return modelosGeminiDisponibles;
+    }
+
+    async function fetchGeminiWithModel(apiKey, model, prompt, opciones = {}) {
+      const { maxOutputTokens = 260, sinThinking = true } = opciones;
+      const controlador = new AbortController();
+      const temporizador = setTimeout(() => controlador.abort(), MODEL_TIMEOUT_MS);
+      const body = {
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.9, maxOutputTokens }
+      };
+      if (sinThinking) body.generationConfig.thinkingConfig = { thinkingBudget: 0 };
+
+      try {
+        const respuesta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controlador.signal
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) {
+          const mensaje = datos.error?.message || `HTTP ${respuesta.status}`;
+          if (sinThinking && /invalid argument|thinking|unknown field/i.test(mensaje)) {
+            return fetchGeminiWithModel(apiKey, model, prompt, { maxOutputTokens, sinThinking: false });
+          }
+          const error = new Error(`${model}: ${mensaje}`);
+          error.status = respuesta.status;
+          throw error;
+        }
+        const texto = datos.candidates?.[0]?.content?.parts?.map(parte => parte.text || '').join('').trim();
+        if (!texto) throw new Error(`${model}: la respuesta no incluyó texto.`);
+        return { texto, model };
+      } catch (error) {
+        if (error?.name === 'AbortError') throw new Error(`Tiempo de espera agotado con ${model}.`);
+        throw error;
+      } finally {
+        clearTimeout(temporizador);
+      }
+    }
+
+    async function solicitarTextoGemini(apiKey, prompt, opciones = {}) {
+      const modelos = await listarModelosGemini(apiKey);
+      let ultimoError = null;
+      for (const model of modelos) {
+        try {
+          return await fetchGeminiWithModel(apiKey, model, prompt, opciones);
+        } catch (error) {
+          ultimoError = error;
+        }
+      }
+      throw ultimoError || new Error('No se encontró un modelo disponible para atender la solicitud.');
+    }
+
+    async function solicitarPreguntaGemini(apiKey, prompt) {
+      return solicitarTextoGemini(apiKey, prompt, { maxOutputTokens: 260 });
+    }
+
+    const LS_API_KEY = 'curso_api_javascript_gemini_api_key';
+    const LS_PROGRESO = 'ia_en_html_progreso_modulos_v1';
+    // La API Key ya no se muestra ni se edita en la interfaz: se guarda y se lee siempre cifrada.
+    const CLAVE_CIFRADO = 'CursoIA-HTML-2026';
+    const API_KEY_INICIAL_CIFRADA = 'AiRcMg1xE2N+HwAienwGbXIzAyI0WQx0Tww+LDsUcVJdRzEeSxJfEzZ/Cmw7CkofQlFxNBI=';
+
+    function cifrarTexto(texto) {
+      if (!texto) return '';
+      let combinado = '';
+      for (let i = 0; i < texto.length; i++) {
+        combinado += String.fromCharCode(texto.charCodeAt(i) ^ CLAVE_CIFRADO.charCodeAt(i % CLAVE_CIFRADO.length));
+      }
+      return btoa(unescape(encodeURIComponent(combinado)));
+    }
+
+    function descifrarTexto(cifrado) {
+      if (!cifrado) return '';
+      try {
+        const combinado = decodeURIComponent(escape(atob(cifrado)));
+        let texto = '';
+        for (let i = 0; i < combinado.length; i++) {
+          texto += String.fromCharCode(combinado.charCodeAt(i) ^ CLAVE_CIFRADO.charCodeAt(i % CLAVE_CIFRADO.length));
+        }
+        return texto;
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function pareceApiKeyValida(texto) {
+      return typeof texto === 'string' && texto.trim().length > 10;
+    }
+
+    function obtenerApiKey() {
+      const guardado = localStorage.getItem(LS_API_KEY);
+      if (guardado) {
+        const descifrado = descifrarTexto(guardado);
+        if (pareceApiKeyValida(descifrado)) return descifrado;
+        // Compatibilidad: si quedó guardada una versión antigua en texto plano (de antes de cifrar
+        // la clave), se migra automáticamente a formato cifrado sin perder la clave del alumno.
+        if (pareceApiKeyValida(guardado)) {
+          localStorage.setItem(LS_API_KEY, cifrarTexto(guardado));
+          return guardado;
+        }
+      }
+      localStorage.setItem(LS_API_KEY, API_KEY_INICIAL_CIFRADA);
+      return descifrarTexto(API_KEY_INICIAL_CIFRADA);
+    }
+
+    let reproductorAudio = new Audio();
+    let autoNarracionActivada = false;
+    let moduloActual = 0;
+    let paginaTeoriaActual = 0;
+    let preguntaActual = '';
+    let adjuntos = [];
+    let paginaMaxVisitada = 0; // página más avanzada a la que el alumno ha llegado en este módulo (para el parpadeo del botón "Siguiente")
+
+    function toast(mensaje, esError = false) {
+      const div = document.createElement('div');
+      div.className = `fixed bottom-5 right-5 z-50 px-4 py-2 rounded-lg text-xs shadow-lg text-white ${esError ? 'bg-red-600' : 'bg-emerald-600'}`;
+      div.textContent = mensaje;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3600);
+    }
+
+    function toggleMenuNavegacion() {
+      const menu = document.getElementById('menuNavegacion');
+      const icono = document.getElementById('iconoMenuNavegacion');
+      const abierto = menu.classList.toggle('hidden') === false;
+      icono.classList.toggle('rotate-180', abierto);
+    }
+
+    function toggleSidebarMovil() {
+      const aside = document.getElementById('sidebarPrincipal');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (!aside || !overlay) return;
+      aside.classList.toggle('-translate-x-full');
+      overlay.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('menuNavegacion');
+      const boton = document.getElementById('btnMenuHamburguesa');
+      if (!menu || menu.classList.contains('hidden')) return;
+      if (!menu.contains(e.target) && !boton.contains(e.target)) {
+        menu.classList.add('hidden');
+        document.getElementById('iconoMenuNavegacion')?.classList.remove('rotate-180');
+      }
+    });
+
+    function detenerAudio() {
+      reproductorAudio.pause();
+      reproductorAudio.currentTime = 0;
+    }
+
+    // pagina es el índice 0-based de la página de teoría (opcional).
+    // Si existe un audio específico para esa página ("<audioId>_p<n>") se usa ese;
+    // si no, o si falla la reproducción, se cae al audio general del módulo.
+    function reproducirAudioLocal(audioId, pagina = null) {
+      const claveEspecifica = typeof pagina === 'number' ? `${audioId}_p${pagina + 1}` : null;
+      const rutaEspecifica = claveEspecifica ? RUTAS_AUDIO[claveEspecifica] : null;
+      const rutaGeneral = RUTAS_AUDIO[audioId] || null;
+      const ruta = rutaEspecifica || rutaGeneral;
+      if (!ruta) {
+        toast('No hay ningún audio configurado para esta sección.', true);
+        return;
+      }
+      detenerAudio();
+      reproductorAudio.src = ruta;
+      reproductorAudio.play().catch(() => {
+        if (rutaEspecifica && rutaGeneral && rutaGeneral !== rutaEspecifica) {
+          reproductorAudio.src = rutaGeneral;
+          reproductorAudio.play().catch(() => {
+            toast(`No se pudo reproducir el audio de esta página. Comprueba que el archivo exista en la carpeta audio/.`, true);
+          });
+        } else {
+          toast(`No se pudo reproducir ${ruta}. Comprueba que el archivo exista en la carpeta audio/.`, true);
+        }
+      });
+    }
+
+    function toggleAutoNarracion() {
+      autoNarracionActivada = !autoNarracionActivada;
+      const btn = document.getElementById('btnAutoNarracion');
+      const icono = document.getElementById('iconoAutoNarracion');
+      const texto = document.getElementById('textoAutoNarracion');
+      icono.className = autoNarracionActivada ? 'fa-solid fa-toggle-on text-amber-400 mr-1.5' : 'fa-solid fa-toggle-off mr-1.5';
+      texto.textContent = autoNarracionActivada ? 'Auto-Audio: ON' : 'Auto-Audio: OFF';
+      texto.classList.toggle('text-amber-400', autoNarracionActivada);
+      btn.classList.toggle('border-amber-500/50', autoNarracionActivada);
+      toast(autoNarracionActivada ? 'Narración local automática activada.' : 'Narración local automática desactivada.');
+      if (!autoNarracionActivada) detenerAudio();
+    }
+
+    function escaparHtml(texto) {
+      const div = document.createElement('div');
+      div.textContent = texto || '';
+      return div.innerHTML;
+    }
+
+    function codigoHtml(codigo) {
+      return escaparHtml(codigo).replace(/\n/g, '<br>');
+    }
+
+    function renderNavegacionModulos() {
+      return `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mb-5">
+        ${MODULOS.map((modulo, indice) => `<button onclick="iniciarModulo(${indice})" class="text-left rounded-xl border p-3 transition-all ${indice === moduloActual ? 'bg-blue-600/20 border-blue-400 text-blue-100' : 'bg-claude-sidebar border-claude-border text-claude-muted hover:border-amber-500/50 hover:text-claude-text'}">
+          <span class="block text-[10px] font-semibold uppercase tracking-wider mb-1">${modulo.etiqueta}</span>
+          <span class="block text-xs font-medium"><i class="fa-solid ${modulo.icono} mr-1.5"></i>${modulo.titulo}</span>
+        </button>`).join('')}
+      </div>`;
+    }
+
+    function renderModulo() {
+      const modulo = MODULOS[moduloActual];
+      const totalPaginas = modulo.teoriaPaginas.length;
+      const chat = document.getElementById('chatContainer');
+      chat.innerHTML = '';
+      const tarjeta = document.createElement('section');
+      tarjeta.className = 'max-w-4xl mx-auto w-full';
+      tarjeta.innerHTML = `${renderNavegacionModulos()}
+        <article class="bg-claude-card border border-claude-border rounded-2xl overflow-hidden shadow-xl">
+          <header class="p-5 border-b border-claude-border bg-gradient-to-r from-blue-950/40 to-claude-card">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-xs text-blue-300 font-semibold uppercase tracking-widest">${modulo.etiqueta} · Progresión ${moduloActual + 1}/${MODULOS.length}</p>
+                <h2 class="text-xl font-bold mt-1"><i class="fa-solid ${modulo.icono} text-claude-accent mr-2"></i>${modulo.titulo}</h2>
+                <p class="text-sm text-claude-muted mt-2 leading-relaxed">${modulo.objetivo}</p>
+              </div>
+              <button id="btnEscucharTeoria" onclick="reproducirAudioLocal('${modulo.audioId}', paginaTeoriaActual)" title="Reproducir el audio de esta página de teoría" class="shrink-0 bg-sky-500/10 text-sky-300 border border-sky-500/30 hover:bg-sky-500/20 rounded-lg px-3 py-2 text-xs font-semibold"><i class="fa-solid fa-volume-high mr-1.5"></i>Escuchar página ${paginaTeoriaActual + 1}</button>
+            </div>
+          </header>
+          <div class="p-5 space-y-6">
+            <section>
+              <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                <h3 class="text-sm font-bold text-amber-300"><i class="fa-solid fa-book-open mr-1.5"></i>Teoría fija</h3>
+                <span class="text-[11px] text-claude-muted"><i class="fa-solid fa-hand-pointer text-amber-400 mr-1"></i>Pulsa los términos resaltados para ver su explicación</span>
+              </div>
+              <div id="teoriaContenido" class="space-y-3 text-sm leading-7 text-claude-text bg-[#202020] border border-claude-border rounded-xl p-4 min-h-[120px]">${modulo.teoriaPaginas[paginaTeoriaActual]}</div>
+              <div class="flex items-center justify-between mt-3">
+                <button id="btnTeoriaPrev" onclick="cambiarPaginaTeoria(-1)" ${paginaTeoriaActual === 0 ? 'disabled' : ''} title="Página anterior"
+                  class="text-xs bg-claude-sidebar border border-claude-border hover:border-amber-500/50 text-claude-muted hover:text-claude-text rounded-lg px-3 py-1.5 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors">
+                  <i class="fa-solid fa-arrow-left"></i> Anterior
+                </button>
+                <span id="teoriaPaginador" class="text-[11px] text-claude-muted font-medium">Página ${paginaTeoriaActual + 1} de ${totalPaginas}</span>
+                <button id="btnTeoriaNext" onclick="cambiarPaginaTeoria(1)" ${paginaTeoriaActual === totalPaginas - 1 ? 'disabled' : ''} title="Página siguiente"
+                  class="text-xs bg-claude-sidebar border border-claude-border hover:border-amber-500/50 text-claude-muted hover:text-claude-text rounded-lg px-3 py-1.5 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors ${(paginaTeoriaActual === paginaMaxVisitada && paginaTeoriaActual < totalPaginas - 1) ? 'blink-siguiente' : ''}">
+                  Siguiente <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+            </section>
+            <section>
+              <h3 class="text-sm font-bold text-amber-300 mb-3"><i class="fa-solid fa-code mr-1.5"></i>Base de código</h3>
+              <pre class="overflow-x-auto bg-[#121212] border border-claude-border rounded-xl p-4 text-xs leading-6 text-emerald-200"><code>${codigoHtml(modulo.codigo)}</code></pre>
+            </section>
+            <section class="border-l-4 border-blue-500 bg-blue-500/10 rounded-r-xl p-4">
+              <h3 class="text-sm font-bold text-blue-200 mb-2"><i class="fa-solid fa-flag-checkered mr-1.5"></i>Ejercicio fijo</h3>
+              <p class="text-sm text-blue-100 leading-relaxed">${escaparHtml(modulo.ejercicio)}</p>
+              <ul class="mt-3 space-y-1 text-xs text-blue-200/90">${modulo.criterios.map(c => `<li><i class="fa-solid fa-check mr-1.5 text-blue-400"></i>${escaparHtml(c)}</li>`).join('')}</ul>
+            </section>
+            <section class="border-l-4 border-purple-500 bg-purple-500/10 rounded-r-xl p-4">
+              <h3 class="text-sm font-bold text-purple-200 mb-1"><i class="fa-solid fa-list-check mr-1.5"></i>Preguntas de repaso (teoría)</h3>
+              <p class="text-xs text-purple-200/80 mb-3">Responde brevemente para comprobar que dominas la teoría de este módulo. Son de autoevaluación local: no se envían a ninguna IA.</p>
+              <div class="space-y-3">
+                ${modulo.preguntasTeoria.map((pregunta, i) => `<div>
+                  <label class="block text-xs font-medium text-purple-100 mb-1">${i + 1}. ${escaparHtml(pregunta)}</label>
+                  <textarea id="respuestaTeoria-${i}" rows="2" class="w-full bg-claude-card border border-claude-border rounded-lg p-2 text-xs text-claude-text focus:outline-none focus:border-purple-400 resize-none custom-scrollbar" placeholder="Escribe tu respuesta..."></textarea>
+                </div>`).join('')}
+              </div>
+              <button onclick="corregirRespuestasTeoria()" class="mt-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg px-3 py-2 text-xs font-semibold"><i class="fa-solid fa-graduation-cap mr-1.5"></i>Corregir</button>
+            </section>
+            <section id="zonaPregunta" class="border border-dashed border-sky-500/40 rounded-xl p-4 bg-sky-500/5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div><h3 class="text-sm font-bold text-sky-200"><i class="fa-solid fa-circle-question mr-1.5"></i>Pregunta práctica variable</h3><p class="text-xs text-claude-muted mt-1">La teoría y el ejercicio anterior son fijos. Gemini generará una única pregunta nueva sobre este módulo.</p></div>
+                <button onclick="generarPreguntaVariable()" class="bg-sky-600 hover:bg-sky-500 text-white rounded-lg px-3 py-2 text-xs font-semibold"><i class="fa-solid fa-shuffle mr-1.5"></i>Generar pregunta</button>
+              </div>
+              <div id="preguntaVariable" class="hidden mt-4"></div>
+            </section>
+          </div>
+        </article>`;
+      chat.appendChild(tarjeta);
+      if (autoNarracionActivada) setTimeout(() => reproducirAudioLocal(modulo.audioId, paginaTeoriaActual), 250);
+      chat.scrollTop = 0;
+    }
+
+    function cambiarPaginaTeoria(delta) {
+      const modulo = MODULOS[moduloActual];
+      const total = modulo.teoriaPaginas.length;
+      paginaTeoriaActual = Math.max(0, Math.min(total - 1, paginaTeoriaActual + delta));
+      // Solo avanzar "desbloquea" la siguiente página: el máximo alcanzado nunca baja,
+      // así que al volver atrás para repasar el botón no vuelve a parpadear.
+      paginaMaxVisitada = Math.max(paginaMaxVisitada, paginaTeoriaActual);
+      actualizarTeoriaDOM();
+      if (autoNarracionActivada) reproducirAudioLocal(modulo.audioId, paginaTeoriaActual);
+      else detenerAudio();
+    }
+
+    function actualizarTeoriaDOM() {
+      const modulo = MODULOS[moduloActual];
+      const total = modulo.teoriaPaginas.length;
+      const contenido = document.getElementById('teoriaContenido');
+      const paginador = document.getElementById('teoriaPaginador');
+      const prev = document.getElementById('btnTeoriaPrev');
+      const next = document.getElementById('btnTeoriaNext');
+      const btnEscuchar = document.getElementById('btnEscucharTeoria');
+      if (!contenido || !paginador || !prev || !next) return;
+      contenido.innerHTML = modulo.teoriaPaginas[paginaTeoriaActual];
+      paginador.textContent = `Página ${paginaTeoriaActual + 1} de ${total}`;
+      prev.disabled = paginaTeoriaActual === 0;
+      next.disabled = paginaTeoriaActual === total - 1;
+      next.classList.toggle('blink-siguiente', paginaTeoriaActual === paginaMaxVisitada && paginaTeoriaActual < total - 1);
+      if (btnEscuchar) btnEscuchar.innerHTML = `<i class="fa-solid fa-volume-high mr-1.5"></i>Escuchar página ${paginaTeoriaActual + 1}`;
+      contenido.scrollTop = 0;
+    }
+
+    async function corregirRespuestasTeoria() {
+      const modulo = MODULOS[moduloActual];
+      const apiKey = obtenerApiKey();
+      if (!apiKey) {
+        toast('No se encontró una API Key configurada para que el profesor IA corrija tus respuestas.', true);
+        return;
+      }
+      const respuestas = modulo.preguntasTeoria.map((pregunta, i) => ({
+        pregunta,
+        respuesta: (document.getElementById(`respuestaTeoria-${i}`)?.value || '').trim()
+      }));
+      if (respuestas.every(r => !r.respuesta)) {
+        toast('Escribe al menos una respuesta antes de pedir la corrección.', true);
+        return;
+      }
+      abrirCorreccionModal(modulo);
+      try {
+        const prompt = `Eres un profesor experto en desarrollo web que corrige respuestas de repaso teórico de un alumno sobre el módulo "${modulo.titulo}".
+Para cada pregunta y respuesta del alumno:
+- Asigna una puntuación que debe ser EXACTAMENTE uno de estos valores: 0, 0.5, 1, 1.5 o 2 (2 = respuesta completa y bien estructurada, 0 = en blanco o claramente incorrecta).
+- Escribe un comentario breve (máximo 40 palabras) con sugerencias, mejoras, inconvenientes y/o recomendaciones a seguir.
+
+Preguntas y respuestas del alumno:
+${respuestas.map((r, i) => `${i + 1}. Pregunta: ${r.pregunta}\nRespuesta del alumno: ${r.respuesta || '(sin responder)'}`).join('\n\n')}
+
+Devuelve ÚNICAMENTE un JSON válido (sin Markdown, sin backticks, sin texto adicional antes o después) con este formato exacto:
+[{"pregunta":"...","puntuacion":0,"comentario":"..."}, ...]
+El array debe tener exactamente ${respuestas.length} elementos, en el mismo orden que las preguntas.`;
+        const { texto, model } = await solicitarTextoGemini(apiKey, prompt, { maxOutputTokens: 1100 });
+        const correccion = parsearCorreccionJSON(texto, respuestas);
+        mostrarCorreccion(correccion, model);
+      } catch (error) {
+        mostrarErrorCorreccion(error.message);
+      }
+    }
+
+    function parsearCorreccionJSON(texto, respuestasOriginales) {
+      const match = texto.match(/\[[\s\S]*\]/);
+      const bruto = match ? match[0] : texto;
+      try {
+        const datos = JSON.parse(bruto);
+        return respuestasOriginales.map((r, i) => {
+          const item = datos[i] || {};
+          let puntuacion = Number(item.puntuacion);
+          if (!isFinite(puntuacion)) puntuacion = 0;
+          puntuacion = Math.max(0, Math.min(2, Math.round(puntuacion * 2) / 2));
+          return { pregunta: r.pregunta, respuesta: r.respuesta, puntuacion, comentario: item.comentario || 'Sin comentario.' };
+        });
+      } catch (error) {
+        return respuestasOriginales.map(r => ({ pregunta: r.pregunta, respuesta: r.respuesta, puntuacion: null, comentario: 'No se pudo interpretar la corrección automática de esta pregunta.' }));
+      }
+    }
+
+    function abrirCorreccionModal(modulo) {
+      const overlay = document.getElementById('correccionModalOverlay');
+      const subtitulo = document.getElementById('correccionModalSubtitulo');
+      const body = document.getElementById('correccionModalBody');
+      const footer = document.getElementById('correccionModalFooter');
+      subtitulo.textContent = `${modulo.etiqueta} · ${modulo.titulo}`;
+      body.innerHTML = `<div class="flex items-center gap-2 text-claude-muted text-xs"><i class="fa-solid fa-circle-notch fa-spin text-purple-300"></i><span>El profesor IA está corrigiendo tus respuestas...</span></div>`;
+      footer.classList.add('hidden');
+      footer.innerHTML = '';
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function cerrarCorreccionModal() {
+      const overlay = document.getElementById('correccionModalOverlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    function puntuacionColor(p) {
+      if (p === null) return 'text-claude-muted border-claude-border bg-claude-card';
+      if (p >= 1.5) return 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10';
+      if (p >= 1) return 'text-amber-300 border-amber-500/40 bg-amber-500/10';
+      return 'text-red-300 border-red-500/40 bg-red-500/10';
+    }
+
+    function mostrarCorreccion(correccion, model) {
+      const body = document.getElementById('correccionModalBody');
+      const footer = document.getElementById('correccionModalFooter');
+      body.innerHTML = correccion.map((c, i) => `
+        <div class="border border-claude-border rounded-xl p-3 bg-[#202020]">
+          <div class="flex items-start justify-between gap-3 mb-1.5">
+            <p class="text-xs font-semibold text-purple-200 flex-1">${i + 1}. ${escaparHtml(c.pregunta)}</p>
+            <span class="shrink-0 text-[11px] font-bold border rounded-full px-2 py-0.5 ${puntuacionColor(c.puntuacion)}">${c.puntuacion === null ? 'N/D' : String(c.puntuacion).replace('.', ',') + ' / 2'}</span>
+          </div>
+          <p class="text-xs text-claude-muted italic mb-1.5 whitespace-pre-wrap">${c.respuesta ? escaparHtml(c.respuesta) : 'Sin responder.'}</p>
+          <p class="text-xs text-claude-text leading-relaxed"><i class="fa-solid fa-comment-dots text-amber-400 mr-1"></i>${escaparHtml(c.comentario)}</p>
+        </div>`).join('');
+      const totalObtenido = correccion.reduce((acc, c) => acc + (c.puntuacion || 0), 0);
+      const totalMax = correccion.length * 2;
+      guardarPuntuacionTeoria(moduloActual, totalObtenido, totalMax);
+      footer.innerHTML = `<div class="flex items-center justify-between w-full gap-3">
+          <span class="text-[11px] text-claude-muted">Corrección generada con ${escaparHtml(model)}</span>
+          <span class="text-sm font-bold text-amber-400 whitespace-nowrap">Puntuación total: ${String(totalObtenido).replace('.', ',')} / ${totalMax}</span>
+        </div>`;
+      footer.classList.remove('hidden');
+    }
+
+    function mostrarErrorCorreccion(mensaje) {
+      const body = document.getElementById('correccionModalBody');
+      body.innerHTML = `<div class="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-3">No se pudo generar la corrección: ${escaparHtml(mensaje || 'error de conexión.')}</div>`;
+    }
+
+    function cargarProgresoModulos() {
+      try { return JSON.parse(localStorage.getItem(LS_PROGRESO) || '{}'); }
+      catch (e) { return {}; }
+    }
+
+    function guardarProgresoModulos(progreso) {
+      localStorage.setItem(LS_PROGRESO, JSON.stringify(progreso));
+    }
+
+    function marcarModuloVisitado(indice) {
+      const modulo = MODULOS[indice];
+      if (!modulo) return;
+      const progreso = cargarProgresoModulos();
+      const entry = progreso[modulo.id] || {};
+      const ahora = new Date().toISOString();
+      entry.titulo = modulo.titulo;
+      entry.etiqueta = modulo.etiqueta;
+      entry.indice = indice;
+      entry.visitado = true;
+      if (!entry.primeraVisita) entry.primeraVisita = ahora;
+      entry.ultimaVisita = ahora;
+      progreso[modulo.id] = entry;
+      guardarProgresoModulos(progreso);
+    }
+
+    function guardarPuntuacionTeoria(indice, totalObtenido, totalMax) {
+      const modulo = MODULOS[indice];
+      if (!modulo) return;
+      const progreso = cargarProgresoModulos();
+      const entry = progreso[modulo.id] || {};
+      const ahora = new Date().toISOString();
+      entry.titulo = modulo.titulo;
+      entry.etiqueta = modulo.etiqueta;
+      entry.indice = indice;
+      entry.visitado = true;
+      entry.maxPuntuacionTeoria = totalMax;
+      entry.ultimaPuntuacionTeoria = totalObtenido;
+      entry.mejorPuntuacionTeoria = Math.max(totalObtenido, entry.mejorPuntuacionTeoria || 0);
+      entry.intentosTeoria = (entry.intentosTeoria || 0) + 1;
+      entry.fechaCorreccion = ahora;
+      progreso[modulo.id] = entry;
+      guardarProgresoModulos(progreso);
+    }
+
+    function iniciarModulo(indice) {
+      moduloActual = Math.max(0, Math.min(MODULOS.length - 1, indice));
+      paginaTeoriaActual = 0;
+      preguntaActual = '';
+      paginaMaxVisitada = 0; // cada módulo empieza con el botón "Siguiente" parpadeando de nuevo
+      detenerAudio();
+      renderModulo();
+      marcarModuloVisitado(moduloActual);
+    }
+
+    async function generarPreguntaVariable() {
+      const destino = document.getElementById('preguntaVariable');
+      const apiKey = obtenerApiKey();
+      const modulo = MODULOS[moduloActual];
+      if (!apiKey) {
+        toast('No se encontró una API Key configurada para generar una pregunta variable.', true);
+        return;
+      }
+      destino.className = 'mt-4 rounded-lg bg-claude-sidebar border border-claude-border p-3 text-xs text-claude-muted flex items-center gap-2';
+      destino.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-sky-300"></i> Generando una pregunta nueva…';
+      try {
+        const prompt = `Eres un docente de desarrollo web. Genera UNA sola pregunta práctica breve, diferente en cada llamada, para un estudiante que acaba de estudiar el módulo "${modulo.titulo}". Conceptos del módulo: ${modulo.contextoPregunta}\n\nLa pregunta debe ser resoluble con HTML y JavaScript básico, pedir una acción concreta, no incluir respuesta ni explicación, y ocupar como máximo 65 palabras. No uses Markdown, títulos, saludos ni prefacios. Devuelve únicamente el enunciado de la pregunta en español.`;
+        const { texto, model } = await solicitarPreguntaGemini(apiKey, prompt);
+        preguntaActual = texto.replace(/^[-•\s]+/, '');
+        destino.className = 'mt-4 bg-sky-500/10 border-l-4 border-sky-500 rounded-r-lg p-4 text-sm text-sky-100 leading-relaxed';
+        destino.innerHTML = `<div class="flex items-start gap-2"><i class="fa-solid fa-chevron-right follow-arrow mt-1"></i><div><p>${escaparHtml(preguntaActual)}</p><p class="mt-2 text-[10px] text-sky-300/80">Pregunta variable creada con ${escaparHtml(model)}.</p></div></div>`;
+      } catch (error) {
+        destino.className = 'mt-4 bg-red-500/10 border-l-4 border-red-500 rounded-r-lg p-4 text-xs text-red-200';
+        destino.textContent = 'No se pudo generar la pregunta: ' + (error.message || 'error de conexión.');
+      }
+    }
+
+    async function probarGeminiKey() {
+      const apiKey = obtenerApiKey();
+      const resultDiv = document.getElementById('geminiTestResult');
+      if (!apiKey) {
+        resultDiv.textContent = 'No se encontró ninguna API Key configurada.';
+        resultDiv.className = 'text-xs p-2 rounded-lg text-center mt-2 bg-red-500/20 text-red-300';
+        return;
+      }
+      resultDiv.textContent = 'Comprobando modelos y conexión con Google Gemini…';
+      resultDiv.className = 'text-xs p-2 rounded-lg text-center mt-2 bg-blue-500/20 text-blue-300';
+      try {
+        const { texto, model } = await solicitarPreguntaGemini(apiKey, 'Responde únicamente: OK');
+        if (!/^ok[.!\s]*$/i.test(texto)) throw new Error('La prueba recibió una respuesta no esperada.');
+        resultDiv.textContent = `Conexión establecida. Modelo activo: ${model}`;
+        resultDiv.className = 'text-xs p-2 rounded-lg text-center mt-2 bg-emerald-500/20 text-emerald-300';
+      } catch (error) {
+        resultDiv.textContent = `Error de conexión: ${error.message || 'clave no válida o sin cuota.'}`;
+        resultDiv.className = 'text-xs p-2 rounded-lg text-center mt-2 bg-red-500/20 text-red-300';
+      }
+    }
+
+    function mostrarModalPresentacion() {
+      const overlay = document.getElementById('presentacionModalOverlay');
+      const body = document.getElementById('presentacionModalBody');
+      const boton = document.getElementById('comenzarCursoBtn');
+      body.textContent = 'Este curso avanza en 10 módulos, de los conceptos básicos a la construcción de interfaces e integraciones de IA completas. La teoría de cada módulo se organiza en varias páginas: usa las flechas ← y → para recorrerlas, y cada página puede tener su propio audio. La explicación, el código base y el ejercicio de cada módulo son fijos. Los términos clave son pulsables: al hacer clic se abre una ficha con la definición ampliada.\n\nCada módulo incluye también 5 preguntas de repaso en texto libre: al pulsar "Corregir", el profesor IA analiza tus respuestas y muestra sugerencias, mejoras y una puntuación (de 0 a 2 por pregunta) en un modal. También hay una pregunta práctica que Gemini genera de forma distinta cada vez, y un chat general donde puedes escribir código, dudas o respuestas; al pulsar "Enviar mensaje" el profesor IA te responde en un modal.\n\nLos temarios tienen la opción de escucharse en audio.';
+      boton.disabled = false;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function ocultarModalPresentacion() {
+      const overlay = document.getElementById('presentacionModalOverlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    function cerrarModalYComenzar() {
+      ocultarModalPresentacion();
+      iniciarModulo(0);
+    }
+
+    function limpiarChat() {
+      preguntaActual = '';
+      adjuntos = [];
+      renderAdjuntos();
+      iniciarModulo(0);
+    }
+
+    function generarId() { return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+    function extensionDe(nombre) { const m = /\.([a-zA-Z0-9]+)$/.exec(nombre || ''); return m ? m[1].toLowerCase() : ''; }
+    const EXT_TEXTO = ['txt','md','js','ts','jsx','tsx','py','java','c','cpp','h','cs','rb','go','php','html','htm','css','json','xml','yml','yaml','sql','sh','kt','swift','rs','csv','tsv','log','ini','env'];
+
+    async function leerArchivoComoTexto(file) { return file.text(); }
+    function leerArchivoComoDataURL(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); }
+
+    async function manejarArchivosSeleccionados(fileList) {
+      for (const file of Array.from(fileList || [])) {
+        if (file.size > 8 * 1024 * 1024) { toast(`"${file.name}" supera 8 MB.`, true); continue; }
+        const ext = extensionDe(file.name);
+        try {
+          if (file.type.startsWith('image/')) {
+            const dataUrl = await leerArchivoComoDataURL(file);
+            adjuntos.push({ id: generarId(), name: file.name, kind: 'image', previewUrl: dataUrl });
+          } else if (file.type.startsWith('text/') || EXT_TEXTO.includes(ext)) {
+            adjuntos.push({ id: generarId(), name: file.name, kind: 'text', content: await leerArchivoComoTexto(file) });
+          } else toast(`Tipo no compatible: ${file.name}`, true);
+        } catch (error) { toast(`No se pudo leer ${file.name}.`, true); }
+      }
+      renderAdjuntos();
+    }
+
+    function renderAdjuntos() {
+      const cont = document.getElementById('adjuntosPreview');
+      cont.innerHTML = '';
+      cont.classList.toggle('hidden', !adjuntos.length);
+      cont.classList.toggle('flex', Boolean(adjuntos.length));
+      adjuntos.forEach(a => {
+        const chip = document.createElement('div');
+        chip.className = 'flex items-center gap-2 bg-claude-card border border-claude-border rounded-lg pl-2 pr-1 py-1 text-xs text-claude-text';
+        chip.innerHTML = `<i class="fa-solid ${a.kind === 'image' ? 'fa-image' : 'fa-file-code'} text-claude-accent"></i><span class="max-w-[160px] truncate">${escaparHtml(a.name)}</span>`;
+        const borrar = document.createElement('button');
+        borrar.innerHTML = '<i class="fa-solid fa-xmark text-[10px]"></i>';
+        borrar.className = 'text-claude-muted hover:text-red-400 w-5 h-5';
+        borrar.onclick = () => { adjuntos = adjuntos.filter(x => x.id !== a.id); renderAdjuntos(); };
+        chip.appendChild(borrar);
+        cont.appendChild(chip);
+      });
+    }
+
+    async function enviarMensaje() {
+      const input = document.getElementById('userInput');
+      const texto = input.value.trim();
+      if (!texto && !adjuntos.length) return;
+      const apiKey = obtenerApiKey();
+      if (!apiKey) {
+        toast('No se encontró una API Key configurada para recibir la respuesta del profesor IA.', true);
+        return;
+      }
+
+      const modulo = MODULOS[moduloActual];
+      const adjuntosTexto = adjuntos.filter(a => a.kind === 'text')
+        .map(a => `\n\n--- Archivo adjunto: ${a.name} ---\n${a.content}`).join('');
+      const hayImagenes = adjuntos.some(a => a.kind === 'image');
+
+      abrirProfesorModalCargando(texto);
+
+      try {
+        const prompt = `Eres el profesor IA de un curso de integración de IA en HTML y JavaScript. El alumno está trabajando en "${modulo.etiqueta}: ${modulo.titulo}".
+
+Mensaje del alumno (puede incluir código, dudas o respuestas a los ejercicios):
+${texto || '(el alumno no escribió texto, solo adjuntó archivos)'}${adjuntosTexto}${hayImagenes ? '\n\n(El alumno también adjuntó una o más capturas de pantalla que no puedes ver en este prompt; si es relevante, pídele que describa lo que muestran.)' : ''}
+
+Responde en español, como un profesor cercano y claro: valora lo que esté bien, señala errores o mejoras concretas de código si los hay, resuelve las dudas planteadas y sugiere próximos pasos. Puedes usar como mucho una lista breve; evita títulos grandes de Markdown. Máximo 200 palabras.`;
+        const { texto: respuestaIA, model } = await solicitarTextoGemini(apiKey, prompt, { maxOutputTokens: 550 });
+        mostrarRespuestaProfesor(texto, respuestaIA, model);
+      } catch (error) {
+        mostrarErrorProfesor(error.message);
+      }
+
+      input.value = '';
+      adjuntos = [];
+      renderAdjuntos();
+    }
+
+    function abrirProfesorModalCargando(mensajeAlumno) {
+      const overlay = document.getElementById('profesorModalOverlay');
+      const subtitulo = document.getElementById('profesorModalSubtitulo');
+      const body = document.getElementById('profesorModalBody');
+      const resumen = (mensajeAlumno || '').trim();
+      subtitulo.textContent = resumen ? (resumen.length > 80 ? resumen.slice(0, 80) + '…' : resumen) : 'Adjunto enviado sin texto';
+      body.innerHTML = `<div class="flex items-center gap-2 text-claude-muted text-xs"><i class="fa-solid fa-circle-notch fa-spin text-sky-300"></i><span>El profesor IA está revisando tu mensaje...</span></div>`;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function cerrarProfesorModal() {
+      const overlay = document.getElementById('profesorModalOverlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    function mostrarRespuestaProfesor(mensajeAlumno, respuestaIA, model) {
+      const body = document.getElementById('profesorModalBody');
+      body.innerHTML = `
+        <div class="bg-[#202020] border border-claude-border rounded-xl p-3">
+          <p class="text-[11px] font-semibold text-claude-muted uppercase tracking-wider mb-1"><i class="fa-solid fa-user mr-1"></i>Tu mensaje</p>
+          <p class="text-xs text-claude-text whitespace-pre-wrap">${escaparHtml(mensajeAlumno || 'Adjunto enviado sin texto.')}</p>
+        </div>
+        <div class="bg-sky-500/10 border-l-4 border-sky-500 rounded-r-xl p-4">
+          <p class="text-[11px] font-semibold text-sky-300 uppercase tracking-wider mb-1"><i class="fa-solid fa-chalkboard-user mr-1"></i>Profesor IA</p>
+          <p class="text-sm text-sky-50 whitespace-pre-wrap leading-relaxed">${escaparHtml(respuestaIA)}</p>
+          <p class="mt-3 text-[10px] text-sky-300/70">Generado con ${escaparHtml(model)}</p>
+        </div>`;
+    }
+
+    function mostrarErrorProfesor(mensaje) {
+      const body = document.getElementById('profesorModalBody');
+      body.innerHTML = `<div class="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-3">No se pudo obtener respuesta del profesor IA: ${escaparHtml(mensaje || 'error de conexión.')}</div>`;
+    }
+
+    let recognition = null;
+    let isListening = false;
+    function toggleSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { toast('Tu navegador no admite dictado por micrófono.', true); return; }
+      const micBtn = document.getElementById('micBtn');
+      const status = document.getElementById('speechStatus');
+      if (isListening) { recognition.stop(); return; }
+      recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES'; recognition.continuous = false; recognition.interimResults = false;
+      recognition.onstart = () => { isListening = true; micBtn.classList.add('text-amber-500', 'border-amber-500'); status.classList.remove('hidden'); };
+      recognition.onresult = e => { const input = document.getElementById('userInput'); input.value += (input.value ? ' ' : '') + e.results[0][0].transcript; };
+      recognition.onerror = e => toast('Error de dictado: ' + e.error, true);
+      recognition.onend = () => { isListening = false; micBtn.classList.remove('text-amber-500', 'border-amber-500'); status.classList.add('hidden'); };
+      recognition.start();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      obtenerApiKey(); // asegura que la clave inicial cifrada quede guardada en el almacenamiento local
+      document.getElementById('fileInput').addEventListener('change', e => { manejarArchivosSeleccionados(e.target.files); e.target.value = ''; });
+      document.getElementById('userInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje(); } });
+      renderModulo();
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('skip_intro') === '1') {
+        iniciarModulo(0);
+        history.replaceState(null, '', window.location.pathname);
+      } else {
+        mostrarModalPresentacion();
+      }
+    });
+  </script>
+</body>
+</html>
