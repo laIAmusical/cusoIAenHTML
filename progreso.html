@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Progreso - IA en HTML</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ colors:{ claude:{ bg:'#191919', sidebar:'#212121', card:'#262626', border:'#383838', text:'#ececec', muted:'#9b9b9b', accent:'#d97706' } } } } };
+  </script>
+  <style>
+    body{background:#191919;color:#ececec;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,sans-serif}
+    .custom-scrollbar::-webkit-scrollbar{width:6px;height:6px}.custom-scrollbar::-webkit-scrollbar-track{background:#191919}.custom-scrollbar::-webkit-scrollbar-thumb{background:#383838;border-radius:3px}
+    .glass{background:linear-gradient(135deg,rgba(217,119,6,.12),rgba(56,189,248,.06));border:1px solid rgba(217,119,6,.28)}
+    .module-card{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.module-card:hover{transform:translateY(-3px);border-color:rgba(217,119,6,.65);box-shadow:0 12px 30px rgba(0,0,0,.25)}
+    .segment{transition:background-color .25s ease,border-color .25s ease}
+    .bar-fill{transition:width .4s ease}
+  </style>
+</head>
+<body class="bg-claude-bg text-claude-text min-h-screen">
+  <header class="border-b border-claude-border bg-claude-sidebar sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3"><div class="bg-claude-accent text-white p-2.5 rounded-xl font-bold"><i class="fa-solid fa-chart-line"></i></div><div><h1 class="font-bold text-lg tracking-wide">Mi Progreso</h1><p class="text-xs text-claude-muted">IA en HTML · Frontend Aumentado con Prompt-to-UI</p></div></div>
+      <nav class="flex flex-wrap gap-2 text-xs">
+        <a href="index.html?skip_intro=1" class="px-3 py-2 rounded-lg border border-claude-border bg-claude-card text-claude-muted hover:text-white hover:border-amber-500/50">← Volver al curso</a>
+        <a href="descargas.html" class="px-3 py-2 rounded-lg border border-claude-border bg-claude-card text-claude-muted hover:text-white hover:border-amber-500/50">Descargas</a>
+        <a href="informacion.html" class="px-3 py-2 rounded-lg border border-claude-border bg-claude-card text-claude-muted hover:text-white hover:border-amber-500/50">Información</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 md:px-8 py-8">
+
+    <!-- HERO + BARRA GLOBAL -->
+    <section class="glass rounded-2xl p-6 md:p-8 mb-8 relative overflow-hidden">
+      <div class="absolute -right-10 -top-16 w-48 h-48 rounded-full border border-amber-400/20"></div>
+      <div class="absolute right-10 -bottom-20 w-56 h-56 rounded-full border border-sky-400/10"></div>
+      <div class="relative z-10">
+        <p class="text-xs uppercase tracking-[.22em] text-amber-300 mb-3">Recorrido del alumno</p>
+        <h2 class="text-2xl md:text-4xl font-bold leading-tight mb-3">Tu progreso en el curso</h2>
+        <p class="text-sm md:text-base text-claude-muted leading-relaxed max-w-3xl">Este resumen combina los módulos que has visitado, los cuestionarios de teoría que has corregido con el profesor IA y los ejercicios que has guardado desde el Centro de Descargas.</p>
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-claude-muted uppercase tracking-wider">Progreso global del curso</span>
+            <span id="globalPct" class="text-sm font-bold text-amber-400">0%</span>
+          </div>
+          <div class="w-full h-3 rounded-full bg-[#1c1c1c] border border-claude-border overflow-hidden">
+            <div id="globalBar" class="bar-fill h-full bg-gradient-to-r from-amber-500 to-emerald-500" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="mt-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-claude-muted uppercase tracking-wider">Recorrido por módulo (1 → 10)</span>
+            <span class="text-[11px] text-claude-muted">Pasa el cursor sobre cada bloque</span>
+          </div>
+          <div id="segmentedBar" class="grid grid-cols-10 gap-1.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTADÍSTICAS -->
+    <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"></div>
+
+    <!-- RESUMEN DE APRENDIZAJE -->
+    <section class="bg-claude-card border border-claude-border rounded-2xl p-6 mb-8">
+      <h2 class="text-lg font-bold text-sky-300 mb-3 flex items-center gap-2"><i class="fa-solid fa-book-open-reader"></i> Resumen de lo aprendido</h2>
+      <div id="resumenAprendizaje" class="text-sm text-claude-muted leading-relaxed"></div>
+    </section>
+
+    <!-- DETALLE POR MÓDULO -->
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">Detalle por módulo</h2>
+      <button onclick="reiniciarProgreso()" class="no-print text-xs px-3 py-2 rounded-lg border border-claude-border bg-claude-card text-claude-muted hover:text-rose-300 hover:border-rose-400/50">↺ Reiniciar progreso de módulos</button>
+    </div>
+    <div id="modulosGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"></div>
+
+    <!-- EJERCICIOS GUARDADOS -->
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+      <div>
+        <p class="text-xs text-sky-400 font-semibold uppercase tracking-wider">Portafolio del alumno</p>
+        <h2 class="text-xl font-bold mt-1">Ejercicios guardados y notas</h2>
+      </div>
+      <a href="descargas.html" class="text-xs px-3 py-2 rounded-lg border border-claude-border bg-claude-card text-claude-muted hover:text-white hover:border-amber-500/50">Gestionar ejercicios en Descargas →</a>
+    </div>
+    <div id="ejerciciosGrid" class="space-y-4"></div>
+
+  </main>
+
+  <div id="toast" class="fixed bottom-5 right-5 hidden bg-claude-card border border-claude-border rounded-xl shadow-xl px-4 py-3 text-sm"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script>
+    // Mismo temario que index.html y descargas.html, usado aquí solo para mostrar
+    // etiquetas, títulos y objetivos junto al progreso real guardado en localStorage.
+    const MODULOS = [
+      {id:'modulo1',  n:1,  t:'API & Fetch',                    o:'Comprender cómo una página web se comunica con un servicio externo de forma segura y asíncrona.', color:'amber'},
+      {id:'modulo2',  n:2,  t:'DOM Dinámico',                    o:'Transformar datos JavaScript en elementos HTML visibles y accesibles.', color:'sky'},
+      {id:'modulo3',  n:3,  t:'Prompt-to-UI',                    o:'Diseñar prompts y convertir respuestas estructuradas en componentes de interfaz.', color:'emerald'},
+      {id:'modulo4',  n:4,  t:'GEO & JSON-LD',                   o:'Añadir contexto semántico para que buscadores y sistemas de IA comprendan mejor el contenido.', color:'violet'},
+      {id:'modulo5',  n:5,  t:'Storycards',                      o:'Combinar datos, componentes y eventos para construir una experiencia de aprendizaje interactiva.', color:'fuchsia'},
+      {id:'modulo6',  n:6,  t:'Widgets & Componentes IA',        o:'Construir componentes de interfaz autocontenidos, como buscadores semánticos o asistentes flotantes.', color:'rose'},
+      {id:'modulo7',  n:7,  t:'Generador de Artículos',          o:'Construir un formulario que envía un tema a una IA y publica un artículo con estructura semántica.', color:'orange'},
+      {id:'modulo8',  n:8,  t:'Widget de Chatbot',               o:'Diseñar un componente de chat incrustado que mantiene una conversación con una IA.', color:'cyan'},
+      {id:'modulo9',  n:9,  t:'Personalizador de Interfaz',      o:'Adaptar el texto y la estructura de una interfaz según el perfil o las preferencias del usuario.', color:'blue'},
+      {id:'modulo10', n:10, t:'Proyecto Integrador',             o:'Combinar API, DOM, Prompt-to-UI, GEO y componentes interactivos en un flujo de publicación completo.', color:'yellow'}
+    ];
+
+    const LS_PROGRESO   = 'ia_en_html_progreso_modulos_v1'; // guardado por index.html
+    const LS_EJERCICIOS = 'ia_en_html_ejercicios_v1';       // guardado por descargas.html
+
+    function cargarProgreso() { try { return JSON.parse(localStorage.getItem(LS_PROGRESO) || '{}'); } catch (e) { return {}; } }
+    function cargarEjercicios() { try { return JSON.parse(localStorage.getItem(LS_EJERCICIOS) || '[]'); } catch (e) { return []; } }
+    function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+    function color(c){ return {amber:'amber',sky:'sky',emerald:'emerald',violet:'violet',fuchsia:'fuchsia',rose:'rose',orange:'orange',cyan:'cyan',blue:'blue',yellow:'yellow'}[c] || 'amber'; }
+    function fechaLegible(iso){ if(!iso) return 'Sin fecha'; try{ return new Date(iso).toLocaleDateString('es-ES', {day:'2-digit', month:'short', year:'numeric'}); }catch(e){ return 'Sin fecha'; } }
+
+    function stat(value,label,icon,accent){
+      return `<div class="bg-claude-card border border-claude-border rounded-xl p-3 flex items-center gap-3"><div class="w-9 h-9 rounded-lg bg-${accent}-500/10 text-${accent}-300 flex items-center justify-center"><i class="fa-solid ${icon}"></i></div><div><div class="font-bold text-base">${value}</div><div class="text-[11px] text-claude-muted">${label}</div></div></div>`;
+    }
+
+    function estadoModulo(entry, ejerciciosModulo) {
+      const visitado = Boolean(entry && entry.visitado);
+      const teoriaHecha = Boolean(entry && typeof entry.ultimaPuntuacionTeoria === 'number');
+      const tieneEjercicio = ejerciciosModulo.length > 0;
+      const puntos = (visitado ? 1 : 0) + (teoriaHecha ? 1 : 0) + (tieneEjercicio ? 1 : 0);
+      let etiqueta, badgeClass;
+      if (puntos === 0) { etiqueta = 'No iniciado'; badgeClass = 'bg-[#1c1c1c] text-claude-muted border-claude-border'; }
+      else if (puntos === 3) { etiqueta = 'Completo'; badgeClass = 'bg-emerald-500/10 text-emerald-300 border-emerald-400/30'; }
+      else if (teoriaHecha) { etiqueta = 'Cuestionario corregido'; badgeClass = 'bg-sky-500/10 text-sky-300 border-sky-400/30'; }
+      else { etiqueta = 'Visitado'; badgeClass = 'bg-amber-500/10 text-amber-300 border-amber-400/30'; }
+      return { visitado, teoriaHecha, tieneEjercicio, puntos, etiqueta, badgeClass };
+    }
+
+    function render() {
+      const progreso = cargarProgreso();
+      const ejercicios = cargarEjercicios();
+
+      let puntosTotales = 0;
+      let visitados = 0;
+      let teoriaCorregida = 0;
+      let sumaTeoria = 0;
+      let sumaTeoriaMax = 0;
+      let modulosConEjercicio = 0;
+
+      // Barra segmentada superior
+      const segmentedBar = document.getElementById('segmentedBar');
+      segmentedBar.innerHTML = '';
+
+      // Grid de detalle por módulo
+      const modulosGrid = document.getElementById('modulosGrid');
+      modulosGrid.innerHTML = '';
+
+      const aprendidos = [];
+
+      MODULOS.forEach(m => {
+        const entry = progreso[m.id];
+        const ejerciciosModulo = ejercicios.filter(e => Number(e.modulo) === m.n);
+        const est = estadoModulo(entry, ejerciciosModulo);
+        puntosTotales += est.puntos;
+        if (est.visitado) visitados++;
+        if (est.tieneEjercicio) modulosConEjercicio++;
+        if (est.teoriaHecha) {
+          teoriaCorregida++;
+          sumaTeoria += entry.ultimaPuntuacionTeoria;
+          sumaTeoriaMax += entry.maxPuntuacionTeoria || 10;
+        }
+        if (est.visitado) aprendidos.push(m);
+
+        // --- segmento de la barra superior ---
+        const seg = document.createElement('div');
+        const segColor = est.puntos === 3 ? 'bg-emerald-500/70 border-emerald-400/70'
+                        : est.puntos === 2 ? 'bg-sky-500/60 border-sky-400/60'
+                        : est.puntos === 1 ? 'bg-amber-500/50 border-amber-400/50'
+                        : 'bg-[#1c1c1c] border-claude-border';
+        seg.className = `segment h-6 rounded-md border ${segColor}`;
+        seg.title = `Módulo ${m.n}: ${m.t} — ${est.etiqueta}`;
+        segmentedBar.appendChild(seg);
+
+        // --- tarjeta de detalle ---
+        const c = color(m.color);
+        const teoriaTxt = est.teoriaHecha
+          ? `${String(entry.ultimaPuntuacionTeoria).replace('.', ',')} / ${entry.maxPuntuacionTeoria || 10}${entry.intentosTeoria > 1 ? ` · mejor: ${String(entry.mejorPuntuacionTeoria).replace('.', ',')}` : ''}`
+          : 'Sin corregir';
+        const visitaTxt = est.visitado ? `Visitado el ${fechaLegible(entry.ultimaVisita)}` : 'Aún no visitado';
+        const ejerciciosTxt = est.tieneEjercicio
+          ? `${ejerciciosModulo.length} ejercicio${ejerciciosModulo.length > 1 ? 's' : ''} guardado${ejerciciosModulo.length > 1 ? 's' : ''}`
+          : 'Sin ejercicios guardados';
+
+        const card = document.createElement('article');
+        card.className = 'module-card bg-claude-card border border-claude-border rounded-2xl p-4';
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] uppercase tracking-widest text-claude-muted">Módulo ${m.n}</span>
+            <span class="text-[10px] px-2 py-1 rounded-full border ${est.badgeClass}">${est.etiqueta}</span>
+          </div>
+          <h3 class="font-bold text-sm text-${c}-300">${esc(m.t)}</h3>
+          <p class="text-xs text-claude-muted mt-1.5 leading-relaxed">${esc(m.o)}</p>
+          <div class="mt-3 space-y-1.5 text-[11px] text-claude-muted">
+            <div class="flex items-center gap-1.5"><i class="fa-solid fa-eye w-4 text-claude-muted"></i>${visitaTxt}</div>
+            <div class="flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap w-4 text-claude-muted"></i>Cuestionario: <span class="text-claude-text font-semibold">${teoriaTxt}</span></div>
+            <div class="flex items-center gap-1.5"><i class="fa-solid fa-code w-4 text-claude-muted"></i>${ejerciciosTxt}</div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-claude-border">
+            <div class="w-full h-1.5 rounded-full bg-[#1c1c1c] overflow-hidden">
+              <div class="h-full bg-${c}-500" style="width:${(est.puntos / 3 * 100).toFixed(0)}%"></div>
+            </div>
+          </div>`;
+        modulosGrid.appendChild(card);
+      });
+
+      // --- barra y porcentaje globales ---
+      const pctGlobal = Math.round((puntosTotales / (MODULOS.length * 3)) * 100);
+      document.getElementById('globalBar').style.width = pctGlobal + '%';
+      document.getElementById('globalPct').textContent = pctGlobal + '%';
+
+      // --- estadísticas ---
+      const notaMediaTeoria = teoriaCorregida ? (sumaTeoria / teoriaCorregida).toFixed(1) : '—';
+      const notaMediaEjercicios = ejercicios.length ? (ejercicios.reduce((a, e) => a + Number(e.nota || 0), 0) / ejercicios.length).toFixed(1) : '—';
+      document.getElementById('statsGrid').innerHTML =
+        stat(`${visitados}/10`, 'Módulos visitados', 'fa-eye', 'sky') +
+        stat(`${teoriaCorregida}/10`, 'Cuestionarios corregidos', 'fa-graduation-cap', 'violet') +
+        stat(notaMediaTeoria === '—' ? '—' : `${String(notaMediaTeoria).replace('.', ',')}/10`, 'Nota media cuestionarios', 'fa-star', 'amber') +
+        stat(ejercicios.length, 'Ejercicios guardados', 'fa-code', 'emerald') +
+        stat(`${modulosConEjercicio}/10`, 'Módulos con ejercicio', 'fa-folder-open', 'rose') +
+        stat(notaMediaEjercicios === '—' ? '—' : `${String(notaMediaEjercicios).replace('.', ',')}/10`, 'Nota media ejercicios', 'fa-clipboard-check', 'blue') +
+        stat(`${ejercicios.filter(e => Number(e.nota) >= 5).length}`, 'Ejercicios aprobados', 'fa-circle-check', 'cyan') +
+        stat(`${pctGlobal}%`, 'Progreso global', 'fa-chart-line', 'yellow');
+
+      // --- resumen narrativo ---
+      const resumen = document.getElementById('resumenAprendizaje');
+      if (!aprendidos.length) {
+        resumen.innerHTML = `<p>Todavía no has visitado ningún módulo. Entra al curso y empieza por el <strong class="text-claude-text">Módulo 1: API & Fetch</strong> para que este resumen empiece a completarse automáticamente.</p>`;
+      } else {
+        const lista = aprendidos.map(m => `<li><strong class="text-${color(m.color)}-300">${esc(m.t)}:</strong> ${esc(m.o)}</li>`).join('');
+        const ultimo = aprendidos[aprendidos.length - 1];
+        const siguiente = MODULOS[Math.min(MODULOS.length - 1, aprendidos.length)];
+        const siguienteTxt = aprendidos.length < MODULOS.length
+          ? `Tu próximo paso recomendado es el <strong class="text-claude-text">Módulo ${siguiente.n}: ${esc(siguiente.t)}</strong>.`
+          : `Has recorrido los 10 módulos del curso. ¡Enhorabuena por completar el temario completo!`;
+        resumen.innerHTML = `
+          <p class="mb-3">Hasta ahora has trabajado <strong class="text-claude-text">${aprendidos.length} de 10 módulos</strong>, avanzando desde los fundamentos de comunicación con APIs hasta ${aprendidos.length >= 3 ? 'la construcción de interfaces guiadas por IA' : 'las bases del DOM dinámico'}. Esto es lo que has cubierto:</p>
+          <ul class="list-disc pl-5 space-y-1.5">${lista}</ul>
+          <p class="mt-3">${siguienteTxt}</p>`;
+      }
+
+      // --- ejercicios guardados ---
+      const ejerciciosGrid = document.getElementById('ejerciciosGrid');
+      if (!ejercicios.length) {
+        ejerciciosGrid.innerHTML = `<div class="bg-claude-card border border-dashed border-claude-border rounded-2xl p-10 text-center"><div class="text-4xl text-sky-300 mb-4">✎</div><h3 class="font-bold text-lg mb-2">Todavía no hay ejercicios guardados</h3><p class="text-sm text-claude-muted max-w-md mx-auto mb-5">Ve al Centro de Descargas y usa "Añadir ejercicio" para registrar tus soluciones. Aparecerán aquí automáticamente.</p><a href="descargas.html" class="inline-block bg-sky-600 hover:bg-sky-500 text-white rounded-lg px-4 py-2 text-xs font-semibold">Ir a Descargas →</a></div>`;
+      } else {
+        ejerciciosGrid.innerHTML = ejercicios.map(e => {
+          const m = MODULOS.find(x => x.n == e.modulo) || MODULOS[0];
+          const n = Number(e.nota || 0);
+          return `<article class="bg-claude-card border border-claude-border rounded-2xl p-5">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+              <div>
+                <p class="text-[10px] uppercase tracking-widest text-sky-300">Módulo ${m.n} · ${esc(m.t)}</p>
+                <h3 class="font-bold text-base mt-1">${esc(e.titulo)}</h3>
+              </div>
+              <span class="rounded-full px-3 py-1 text-xs font-bold ${n >= 5 ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-400/20' : 'bg-rose-500/10 text-rose-300 border border-rose-400/20'}">${n.toFixed(1).replace('.', ',')} / 10</span>
+            </div>
+            <div class="mt-3 flex items-center justify-between text-[11px] text-claude-muted">
+              <span><i class="fa-regular fa-calendar mr-1"></i>${esc(e.fecha || 'Sin fecha')}</span>
+              <span>${n >= 8 ? 'Dominio avanzado' : n >= 5 ? 'En progreso' : 'Revisar y repetir'}</span>
+            </div>
+          </article>`;
+        }).join('');
+      }
+    }
+
+    function reiniciarProgreso() {
+      if (!confirm('¿Reiniciar el progreso de módulos y cuestionarios? Esto no borra tus ejercicios guardados en Descargas.')) return;
+      localStorage.removeItem(LS_PROGRESO);
+      render();
+      toast('Progreso de módulos reiniciado.');
+    }
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 2600);
+    }
+
+    render();
+  </script>
+</body>
+</html>
